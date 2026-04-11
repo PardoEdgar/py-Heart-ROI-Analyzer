@@ -31,12 +31,12 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 - os
 - Subprocess
 - OpenCV (cv2)
-- numpy
+- numPy
 - collections
 - sys
 - pandas
 - matplotlib
-- scipy
+- sciPy
 - statsmodels
 - neuroktit2
 - seaborn
@@ -66,5 +66,4 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 ---
 
 ## License
-- The sorce code in this repositroy is licensed ucer the MIT license
--
+- The sorce code in this repository is licensed ucer the MIT license
