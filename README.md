@@ -55,7 +55,7 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 
 ## Author
 
-**E. Alejandro Pardo-Sarmiento
+- E. Alejandro Pardo-Sarmiento
 
 ### Colaborators
 - Eva Valentina Montesdeoca
