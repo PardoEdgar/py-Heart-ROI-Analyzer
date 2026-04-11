@@ -66,4 +66,4 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 ---
 
 ## License
-- The sorce code in this repository is licensed ucer the MIT license
+- The source code in this repository is licensed ucer the MIT license
