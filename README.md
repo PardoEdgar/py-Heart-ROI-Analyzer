@@ -44,6 +44,9 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 ## R
 - R (Version 4.4.2)
 - tidyverse
+- ggrepel
+- gridExtra
+  
 ## ImageJ
 - Fiji-ImageJ
 - Java
