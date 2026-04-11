@@ -10,7 +10,7 @@ My approach combines optocardiography based on pixel intensity changes, video po
 Pixel intennsity extraction, trimming of heart recordings, ROI selection tool, HRV metrics extraction and optocardiogram visualization are implemented in Python-ImageJ Macro combination. Data analysis and visualization are implemente in R. This tool was applied to investigate the cardiac adjustments to face temperature and pressure cahnges in the elevational gradient of the Colombian Andes.
 
 ---
-##Contents
+## Contents
 
 -`scripts/`: Python, R, and ImageJ Macro scripts for Pixel intennsity extraction, trimming of heart recordings, ROI selection tool, HRV metrics extraction, optocardiogram visualization, data analysis and data visualization.
 ## Reproducibility
@@ -57,7 +57,7 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 
 **E. Alejandro Pardo-Sarmiento
 
-# Colaborators
+### Colaborators
 - Eva Valentina Montesdeoca
 - J.P. Hernandez
 - Andre J. Riveros
