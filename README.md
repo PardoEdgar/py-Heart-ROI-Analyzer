@@ -5,7 +5,7 @@ This repository contains a python-ImageJ-R tool for extracting pixel intensity a
 
 This repository provides a reproducible workflow to quatify great heart recordings data volume in the in the land invasive snail *Cornu aspersum*.
 
-My approach combines optocardiography based on pixel intensity changes, video porcessing Manueal ROI selection, optocardiogram visualization, heart rate varibility metrics extraction, data analyisis and visualization.
+This approach combines optocardiography based on pixel intensity changes, video porcessing Manueal ROI selection, optocardiogram visualization, heart rate varibility metrics extraction, data analyisis and visualization.
 
 Pixel intennsity extraction, trimming of heart recordings, ROI selection tool, HRV metrics extraction and optocardiogram visualization are implemented in Python-ImageJ Macro combination. Data analysis and visualization are implemente in R. This tool was applied to investigate the cardiac adjustments to face temperature and pressure cahnges in the elevational gradient of the Colombian Andes.
 
