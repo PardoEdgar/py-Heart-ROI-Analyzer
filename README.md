@@ -13,6 +13,7 @@ Pixel intensity extraction, trimming of heart recordings, ROI selection tool, HR
 ## Contents
 
 -`scripts/`: Python, R, and ImageJ Macro scripts for Pixel intennsity extraction, trimming of heart recordings, ROI selection tool, HRV metrics extraction, optocardiogram visualization, data analysis and data visualization.
+
 -`Data/`: Exp_1 and Exp_2 data presented in xlsx files. Each one contains Snail Size, HR or HRV metrics and sensors data (Temperature and pressure).
 ## Reproducibility
 
