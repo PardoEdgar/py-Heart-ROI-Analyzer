@@ -1,26 +1,15 @@
-// === Generic Fiji Macro for Video Batch Processing ===
 //setBatchMode(true);
 args = getArgument();
 parts =split(args, ",");
-
 video = parts[0];
 outDir = parts[1];
-
-
-
 
 print("Video: " + video);
 print("Saving results to: " + outDir);
 
-
-
-
-
-        print("Processing video: " + video);
-        
+        print("Processing video: " + video);        
 		open(video);
 		selectWindow(File.getName(video));
-
         roiManager("Reset");
 
         makeOval(0, 0, 768, 540);
