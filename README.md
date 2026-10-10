@@ -30,7 +30,7 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 ## Python
 - os
 - Subprocess
-- OpenCV (cv2)
+- OpenCV
 - numPy
 - collections
 - sys
@@ -42,7 +42,6 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 - seaborn
 
 ## R
-- R (Version 4.4.2)
 - tidyverse
 - ggrepel
 - gridExtra
@@ -55,7 +54,7 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 
 ## Author
 
-- E. Alejandro Pardo-Sarmiento
+- Edgar Alejandro Pardo-Sarmiento
 
 ### Colaborators
 - Eva Valentina Montesdeoca
@@ -66,4 +65,4 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 ---
 
 ## License
-- The source code in this repository is licensed ucer the MIT license
+- The source code in this repository is licensed under the MIT license regarding scripts and data. 
