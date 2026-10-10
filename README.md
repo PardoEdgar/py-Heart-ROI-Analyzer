@@ -16,6 +16,7 @@ Pixel intensity extraction, trimming of heart recordings, ROI selection tool, HR
 
 -`Data/`: Exp_1 and Exp_2 data presented in xlsx files. Each one contains Snail Size, HR or HRV metrics and sensors data (Temperature and pressure).
 ## Reproducibility
+-`Google Drive folder/`:  It contains the optocardiograms and the pixel-intensity data over time for all experiments and recordings. Link: https://drive.google.com/drive/folders/1Zj0yrm4FW6JRuhVCadqirOOXD2eTtY_x?usp=sharing
 
 All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 1. `Automated_Trimming.py`
