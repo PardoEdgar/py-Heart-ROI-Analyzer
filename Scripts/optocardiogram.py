@@ -4,9 +4,7 @@ Author: Edgar Alejandro Pardo-Sarmiento (2026)
         Universidad del Rosario, Colombia
 
 Description:
-    This program automates the extraction of pixel-based physiological data from cardiac video recordings
-    across multiple experimental treatments. It integrates video processing, user-defined anatomical
-    region selection, and an ImageJ macro execution to obtain pixel intensity measurements.
+    This program finds, filtered and allows to visualize and check local valleys from pixel intensity signals across time, as proxy of ventricle contractions.
 
 Workflow:
     1. Data files are read and columns data are saved.
@@ -22,8 +20,8 @@ Functions:
          find the possible ventricle contractions (valleys) from a filtered signal, and considering
          a treshold based upon the trend signal. Then, a minimun distance is set to avoid duplicate local valleys
     visualize_and_save()
-        Plots all the pixel intensity data over time and the found valleys (Ventricle contractions). 
-        Lastly, the time and value of valid valleys found in the signal are saved for further analysis. 
+        Plots all the pixel intensity data over time and the found valleys (Ventricle contractions).
+        Lastly, the time and value of valid valleys found in the signal are saved for further analysis.
 """
 
 import os
