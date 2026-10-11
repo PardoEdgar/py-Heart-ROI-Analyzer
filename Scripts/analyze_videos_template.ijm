@@ -1,6 +1,6 @@
 //setBatchMode(true);
 args = getArgument();
-parts =split(args, ",");
+parts = split(args, ",");
 video = parts[0];
 outDir = parts[1];
 
@@ -11,7 +11,6 @@ print("Saving results to: " + outDir);
 		open(video);
 		selectWindow(File.getName(video));
         roiManager("Reset");
-
         makeOval(0, 0, 768, 540);
         roiManager("Add");
         roiManager("Select", roiManager("Count") - 1);
