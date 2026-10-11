@@ -1,15 +1,16 @@
 """
 Author: Edgar Alejandro Pardo-Sarmiento (2026)
+        Departamento de Biología,
         Escuela de Ciencias e Ingeniería,
-        Universidad del Rosario, Colombia
+        Universidad del Rosario, Colombia.
 
 Description:
-    This program finds, filtered and allows to visualize and check local valleys from pixel intensity 
+    This program finds, filtered and allows to visualize and check local valleys from pixel intensity
     signals across time, as proxy of ventricle contractions.
 
 Workflow:
     1. Data files are read and columns data are saved.
-    2. Raw signal is filtered and Signal valleys representing ventricle contractions are found, 
+    2. Raw signal is filtered and Signal valleys representing ventricle contractions are found,
        filtered and saved.
     3. Signal and found valleys are plotted for visualization and manual inspection, and values
        and time from cheked valleys are saved in csv.
