@@ -36,10 +36,10 @@ import cv2
 import sys
 
 
-FIJI_PATH = r"C:\Users\jandr\Documents\fiji-win64\Fiji.app\fiji-windows-x64.exe"
-MACRO_PATH = r"analyze_videos_template.ijm"
-BASE_DIRECTORY = r"C:\Users\jandr\Videos\videos prueba\Extracting"
-OUT_DIRECTORY = r"C:\Users\jandr\Videos\videos prueba\data_extraction"
+FIJI_PATH = r"C:\Users\jandr\Downloads\fiji-latest-win64-jdk\Fiji\fiji-windows-x64.exe"
+MACRO_PATH = r"C:\Users\jandr\Downloads\analyze_videos_template_1.ijm"
+BASE_DIRECTORY = r"C:\Users\jandr\Videos\test"
+OUT_DIRECTORY = r"C:\Users\jandr\Videos\Out"
 
 Out_width = 768
 Out_height = 540
@@ -61,7 +61,7 @@ def main():
             infile = os.path.join(treatment_dir, file)
             base, ext = os.path.splitext(file)
             outfile = os.path.join(treatment_dir, f"{base}_cropped_ROI.avi")
-            print(f" Processing new file: {file,ext}")
+            print(f" Processing new file: {file, ext}")
             accept = False
             while accept == False:
                 Video, fps, frame_vis, scale = load_video_frame(infile)
