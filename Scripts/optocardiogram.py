@@ -1,3 +1,31 @@
+"""
+Author: Edgar Alejandro Pardo-Sarmiento (2026)
+        Escuela de Ciencias e Ingeniería,
+        Universidad del Rosario, Colombia
+
+Description:
+    This program automates the extraction of pixel-based physiological data from cardiac video recordings
+    across multiple experimental treatments. It integrates video processing, user-defined anatomical
+    region selection, and an ImageJ macro execution to obtain pixel intensity measurements.
+
+Workflow:
+    1. Data files are read and columns data are saved.
+    2. Raw signal is filtered and Signal valleys representing ventricle contractions are found, filtered and saved.
+    3. Signal and found valleys are plotted for visualization and manual inspection, and values and time from cheked valleys are saved in csv.
+
+Functions:
+    main()
+        Executes the full analysis pipeline across the csv data files.
+    load_data()
+        Loads csv files, saves de data columns and creates the time column from frames data.
+    find_valleys()
+         find the possible ventricle contractions (valleys) from a filtered signal, and considering
+         a treshold based upon the trend signal. Then, a minimun distance is set to avoid duplicate local valleys
+    visualize_and_save()
+        Plots all the pixel intensity data over time and the found valleys (Ventricle contractions). 
+        Lastly, the time and value of valid valleys found in the signal are saved for further analysis. 
+"""
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,23 +34,20 @@ from scipy.signal import savgol_filter, find_peaks
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 
-FOLDER = r"C:\Users\jandr\Videos\videos prueba\data_extraction"
+FOLDER = r"C:\Users\jandr\Videos\Out"
 OUTPUT_GRAPHS = os.path.join(FOLDER, "Graphs")
 
 os.makedirs(OUTPUT_GRAPHS, exist_ok=True)
 
 
 def main():
-
     all_valleys = []
-
     for filename, data in load_data():
-        print(f"\nProcesando {filename}")
+        print(f"\nProcessing {filename}")
         valleys, processed = find_valleys(data)
         valleys["source_file"] = filename
         all_valleys.append(valleys)
         visualize_and_save(processed, valleys, filename)
-
     all_valleys = pd.concat(all_valleys, ignore_index=True)
     print("All detected valleys:")
     print(all_valleys)
@@ -45,7 +70,6 @@ def load_data():
 
 
 def find_valleys(data):
-
     signal = data["Mean(Ventricle)"].values
     time = data["time"].values
     smoothed = savgol_filter(signal, 25, 5)
@@ -79,18 +103,19 @@ def find_valleys(data):
 
 def visualize_and_save(data, valleys, filename):
     plt.figure()
-    plt.plot(data["time"], data["Mean(Ventricle)"], label="Raw")
-    plt.plot(data["time"], data["smoothed"], label="Smoothed")
-    plt.plot(data["time"], data["trend"], label="Trend")
+    plt.plot(data["time"], data["Mean(Ventricle)"], label="Raw signal")
+    plt.plot(data["time"], data["smoothed"], label="Smoothed signal")
+    plt.plot(data["time"], data["trend"], label="Trend curve")
     if len(valleys) > 0:
         plt.scatter(valleys["time"], valleys["value"], label="Valleys")
     plt.xlabel("Time (s)")
-    plt.ylabel("Mean Ventricle Signal")
+    plt.ylabel("Mean Ventricle Signal (Pixel intensity)")
     plt.legend()
     output_path = os.path.join(OUTPUT_GRAPHS, f"{filename}.png")
     plt.savefig(output_path, dpi=300)
     plt.close()
     print("Saved:", output_path)
+
 
 if __name__ == "__main__":
     main()
