@@ -41,13 +41,13 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 - matplotlib
 - sciPy
 - statsmodels
-- neuroktit2
-- seaborn
+
 
 ## R
 - tidyverse
 - ggrepel
 - gridExtra
+- RHRV
   
 ## ImageJ
 - Fiji-ImageJ
