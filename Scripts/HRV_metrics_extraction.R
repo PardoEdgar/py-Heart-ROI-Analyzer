@@ -7,6 +7,7 @@ library(RHRV)
 library(tidyverse)
 
 all_valleys <- read_csv("C:/Users/jandr/Videos/videos prueba/data_extraction/Data/filtered_valleys.csv")
+Snail_size <- read_csv("C:/Users/jandr/OneDrive - Universidad del rosario/Vega_exp_Snail_T_exp/Data/Size_data/Exp_2/Snail_size.csv")
 all_valleys$time <- as.numeric(all_valleys$time)
 
 extract_HRV_metrics <- function(hrv_object, Snail) {
@@ -78,3 +79,4 @@ HRV_metrics_total$Temperature_numeric_C <-  case_when(
     HRV_metrics_total$Temperature == "ENV" ~ 22,
     HRV_metrics_total$Temperature == "High" ~ 40
 )
+HRV_metrics_total_total <- HRV_metrics_total |> left_join(Snail_size, by="Snail")
