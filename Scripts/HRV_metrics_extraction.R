@@ -78,6 +78,3 @@ HRV_metrics_total$Temperature_numeric_C <-  case_when(
     HRV_metrics_total$Temperature == "ENV" ~ 22,
     HRV_metrics_total$Temperature == "High" ~ 40
 )
-
-
-write_csv(HRV_metrics_total, file= "C:/Users/jandr/Downloads/HRV_metrics_total.csv" )
