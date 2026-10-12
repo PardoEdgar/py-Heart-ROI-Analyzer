@@ -38,7 +38,7 @@ from scipy.signal import savgol_filter, find_peaks
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
 
-FOLDER = r"C:\Users\jandr\Videos\Out"
+FOLDER = r"C:\Users\jandr\Videos\videos prueba\data_extraction"
 OUTPUT_GRAPHS = os.path.join(FOLDER, "Graphs")
 
 os.makedirs(OUTPUT_GRAPHS, exist_ok=True)
@@ -93,10 +93,10 @@ def find_valleys(data):
     inverted = -smoothed
     valley_indices, _ = find_peaks(inverted)
     valley_values = smoothed[valley_indices]
-    threshold = 0.98 * trend[valley_indices]
+    threshold = 0.99 * trend[valley_indices]
     valid = valley_values < threshold
     valley_indices = valley_indices[valid]
-    min_dist = 18
+    min_dist = 10
     filtered = []
 
     if len(valley_indices) > 0:
