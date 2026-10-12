@@ -74,9 +74,11 @@ CV_data <- RR_data %>%
 
 HRV_metrics_total <- HRV_metrics_total %>%
   left_join(CV_data, by = c("Temperature", "Snail", "Site", "Gradient"))
-HRV_metrics_total$Temperature_numeric <-  case_when(
+HRV_metrics_total$Temperature_numeric_C <-  case_when(
     HRV_metrics_total$Temperature == "Cold" ~ 3.5,
     HRV_metrics_total$Temperature == "ENV" ~ 22,
     HRV_metrics_total$Temperature == "High" ~ 40
 )
 
+
+write_csv(HRV_metrics_total, file= "C:/Users/jandr/Downloads/HRV_metrics_total.csv" )
