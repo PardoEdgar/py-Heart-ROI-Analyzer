@@ -61,7 +61,8 @@ def main():
         elif Temperature == "ENV":
             Temperature = "22C"
         else:
-             Temperature = "40C"
+            Temperature = "40C"
+        Site = "LaVega" if Site != "Bogota" else Site
         valleys, processed = find_valleys(data)
         valleys["source_file"] = filename
         valleys["Snail"] = Snail
