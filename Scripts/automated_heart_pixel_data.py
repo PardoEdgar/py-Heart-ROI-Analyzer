@@ -144,7 +144,7 @@ def imageJ(video_path):
 def manual_review():
     while True:
         decision = input(
-            "Accept ROI and continue? [y = yes | r = redo ROI | q = quit]: "
+            "Accept ROI and continue? (y = yes | r = redo ROI | q = quit): "
         ).lower()
 
         if decision in ["y", "r", "q"]:
