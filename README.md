@@ -23,7 +23,7 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 2. `Manual_Trimming.py`
 3. `template.ijm`
 4. `Automated_heart_pixel_intensity_extraction.py`
-5. `HRV_metrics_extraction.py`
+5. `HRV_metrics_extraction.R`
 6. `Optocardiogram_visualization.py`
 7. `Data_analysis_&_visualization.R`
 
