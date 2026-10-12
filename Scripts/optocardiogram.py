@@ -56,6 +56,12 @@ def main():
             Gradient = "UP"
         else:
             Gradient = "DOWN"
+        if Temperature == "Cold":
+            Temperature = "3.5C"
+        elif Temperature == "ENV":
+            Temperature = "22C"
+        else:
+             Temperature = "40C"
         valleys, processed = find_valleys(data)
         valleys["source_file"] = filename
         valleys["Snail"] = Snail
