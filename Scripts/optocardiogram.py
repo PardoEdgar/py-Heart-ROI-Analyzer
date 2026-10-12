@@ -29,6 +29,7 @@ Functions:
         Lastly, the time and value of valid valleys found in the signal are saved for further analysis.
 """
 
+from cv2 import split
 import os
 import numpy as np
 import matplotlib.pyplot as plt
@@ -47,8 +48,20 @@ def main():
     all_valleys = []
     for filename, data in load_data():
         print(f"\nProcessing {filename}")
+        Characters = filename.split("_")
+        Snail = Characters[0]
+        Temperature = Characters[1]
+        Site = Characters[2]
+        if "UP" in filename:
+            Gradient = "UP"
+        else:
+            Gradient = "DOWN"
         valleys, processed = find_valleys(data)
         valleys["source_file"] = filename
+        valleys["Snail"] = Snail
+        valleys["Temperature"] = Temperature
+        valleys["Site"] = Site
+        valleys["Gradient"] = Gradient
         all_valleys.append(valleys)
         visualize_and_save(processed, valleys, filename)
     all_valleys = pd.concat(all_valleys, ignore_index=True)
