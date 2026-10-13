@@ -100,7 +100,7 @@ def find_valleys(data):
     inverted = -smoothed
     valley_indices, _ = find_peaks(inverted)
     valley_values = smoothed[valley_indices]
-    threshold = 0.99 * trend[valley_indices]
+    threshold = trend[valley_indices]
     valid = valley_values < threshold
     valley_indices = valley_indices[valid]
     min_dist = 10
@@ -126,11 +126,18 @@ def find_valleys(data):
 
 def visualize_and_save(data, valleys, filename):
     plt.figure()
-    plt.plot(data["time"], data["Mean(Ventricle)"], label="Raw signal")
-    plt.plot(data["time"], data["smoothed"], label="Smoothed signal")
-    plt.plot(data["time"], data["trend"], label="Trend curve")
     if len(valleys) > 0:
-        plt.scatter(valleys["time"], valleys["value"], label="Valleys")
+        plt.scatter(
+            valleys["time"],
+            valleys["value"],
+            label="Valleys",
+            color="red",
+            s=15,
+            zorder=4,
+        )
+    plt.plot(data["time"], data["Mean(Ventricle)"], label="Raw signal", zorder=1)
+    plt.plot(data["time"], data["smoothed"], label="Smoothed signal", zorder=2)
+    plt.plot(data["time"], data["trend"], label="Trend curve", zorder=3)
     plt.xlabel("Time (s)")
     plt.ylabel("Mean Ventricle Signal (Pixel intensity)")
     plt.legend()
