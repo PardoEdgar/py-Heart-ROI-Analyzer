@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import savgol_filter, find_peaks
 from statsmodels.nonparametric.smoothers_lowess import lowess
+from fnmatch import fnmatch
 
 
 FOLDER = r"C:\Users\jandr\Videos\videos prueba\data_extraction"
@@ -44,9 +45,150 @@ OUTPUT_GRAPHS = os.path.join(FOLDER, "Graphs")
 os.makedirs(OUTPUT_GRAPHS, exist_ok=True)
 
 
+Exclude = [
+    "A3_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "B2_High_Bogota_Elevation_processed_cropped_ROI*",
+    "B2_High_LaVega_Elevation_processed_cropped_ROI*",
+    "C3_ENV_Bogota_Elevation_UP*",
+    "E4_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "E7_High_Bogota_Elevation_processed_cropped_ROI*",
+    "F5_Cold_Bogota_Elevation_UP*",
+    "F9_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "H1_Cold_bOGOTA_Elevation_UP*",
+    "I4_cold_LaVega_Elevation_UP*",
+    "J5_High_Vega_Elevation_UP*",
+    "J7_Cold_LaVega_Elevation_UP*",
+    "E1_High_LaVega_Elevation_processed_cropped_ROI*",
+    "A8_High_LaVega_Elevation_processed_cropped_ROI*",
+    "A1_High_Vega_Elevation_UP*",
+    "A1_High_LaVega_Elevation_processed_cropped_ROI*",
+    "A3_High_Bogota_Elevation_processed_cropped_ROI*",
+    "A3_High_LaVega_Elevation_processed_cropped_ROI*",
+    "A3_High_Vega_Elevation_UP*",
+    "A8_Cold_Bogota_Elevation_UP*",
+    "B4_Cold_LaVega_Elevation_UP*",
+    "C1_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "C1_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "C1_ENV_LaVega_Elevation_processed_cropped_ROI*",
+    "C1_ENV_LaVega_Elevation_UP*",
+    "C1_High_Bogota_Elevation_processed_cropped_ROI*",
+    "C3_High_Bogota_Elevation_processed_cropped_ROI*",
+    "C5_Cold_Vega_Elevation_processed_cropped_ROI*n",
+    "C6_Cold_Bogota_Elevation_UP*",
+    "C6_ENV_Vega_Elevation_UP*",
+    "D4_High_Bogota_Elevation_processed_cropped_ROI*",
+    "D6_High_Bogota_Elevation_processed_cropped_ROI*",
+    "D8_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "E2_Cold_Bogota_Elevation_UP*",
+    "E4_High_LaVega_Elevation_processed_cropped_ROI*",
+    "E7_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "E9_High_Bogota_Elevation_processed_cropped_ROI*",
+    "F2_Cold_Bogota_Elevation_UP*",
+    "F3_ENV_Bogota_Elevation_UP*",
+    "F9_ENV_Bogota_Elevation_UP*",
+    "F9_High_Bogota_Elevation_processed_cropped_ROI*",
+    "G2_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "G5_ENV_LaVega_Elevation_processed_cropped_ROI*",
+    "G6_ENV_LaVega_Elevation_UP*",
+    "G7_ENV_Bogota_Elevation_UP*",
+    "G7_High_Vega_Elevation_UP*",
+    "H5_High_Bogota_Elevation_processed_cropped_ROI*",
+    "H5_High_Vega_Elevation_UP*",
+    "H6_Cold_LaVega_Elevation_UP*",
+    "H7_Cold_Bogota_Elevation_UP*",
+    "H7_ENV_Vega_Elevation_UP*",
+    "H8_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "H8_Cold_Bogota_Elevation_UP*",
+    "H8_High_LaVega_Elevation_processed_cropped_ROI*",
+    "H9_High_Bogota_Elevation_UP*",
+    "I3_High_Bogota_Elevation_processed_cropped_ROI*",
+    "I5_ENV_Vega_Elevation_processed_cropped_ROI*",
+    "I6_Cold_BOGOTA_Elevation_UP*",
+    "I6_High_Bogota_Elevation_processed_cropped_ROI*",
+    "I6_High_Bogota_Elevation_UP*",
+    "I6_High_Lavega_Elevation_processed_cropped_ROI*",
+    "I6_High_vega_Elevation_UP*",
+    "I7_High_LaVega_Elevation_processed_cropped_ROI*",
+    "I7_High_Vega_Elevation_UP*",
+    "I9_High_bogota_Elevation_processed_cropped_ROI*",
+    "J1_Cold_bogota_Elevation_UP*",
+    "J1_High_bogota_Elevation_processed_cropped_ROI*",
+    "J1_High_bogota_Elevation_UP*",
+    "J5_ENV_LaVega_Elevation_processed_cropped_ROI*",
+    "J7_ENV_LaVega_Elevation_processed_cropped_ROI*",
+    "J7_High_BOGOTA_Elevation_processed_cropped_ROI*",
+    "J7_High_LaVEGA_Elevation_processed_cropped_ROI*",
+    "J8_High_LaVEGA_Elevation_processed_cropped_ROI*",
+    "K1_High_Bogota_Elevation_processed_cropped_ROI*",
+    "K1_High_LaVega_Elevation_processed_cropped_ROI*",
+    "K2_ENV_LaVega_Elevation_UP*",
+    "K2_High_LaVega_Elevation_processed_cropped_ROI*",
+    "K3_Cold_bogota_Elevation_processed_cropped_ROI*",
+    "K4_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "K6_Cold_vega_Elevation_processed_cropped_ROI*",
+    "K6_High_Vega_Elevation_UP*",
+    "K8_High_Lavega_Elevation_processed_cropped_ROI*",
+    "K9_High_Lavega_Elevation_processed_cropped_ROI*",
+]
+Special_case = [
+    "A3_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "A3_ENV_Bogota_Elevation_UP*",
+    "B2_Cold_LaVega_Elevation_UP*",
+    "B2_High_Bogota_Elevation_processed_cropped_ROI*",
+    "B2_High_LaVega_Elevation_processed_cropped_ROI*",
+    "B3_Cold_Bogota_Elevation_UP*",
+    "B4_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "B6_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "B7_Cold_LaVega_Elevation_UP*",
+    "B7_High_Bogota_Elevation_processed_cropped_ROI*",
+    "C1_Cold_Bogota_Elevation_UP*",
+    "C3_ENV_Bogota_Elevation_UP*",
+    "C6_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "C8_High_Bogota_Elevation_processed_cropped_ROI*",
+    "D4_High_Vega_Elevation_UP*",
+    "D7_Cold_LaVega_Elevation_UP*",
+    "E2_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "E3_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "E4_Cold_LaVega_Elevation_UP*",
+    "E4_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "E5_Cold_Bogota_Elevation_UP*",
+    "E6_Cold_Bogota_Elevation_UP*",
+    "E7_Cold_LaVega_Elevation_UP*",
+    "E7_High_Bogota_Elevation_processed_cropped_ROI*",
+    "F2_High_Bogota_Elevation_UP*",
+    "F5_Cold_Bogota_Elevation_UP*",
+    "F7_Cold_Bogota_Elevation_UP*",
+    "F8_Cold_Bogota_Elevation_UP*",
+    "F9_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "G1_cold_Bogota_Elevation_UP*",
+    "G1_cold_LaVega_Elevation_UP*",
+    "G9_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "H1_Cold_Bogota_Elevation_UP*",
+    "H4_Cold_LaVega_Elevation_UP*",
+    "H5_Cold_LaVega_Elevation_UP*",
+    "H7_High_Bogota_Elevation_UP*",
+    "I1_Cold_Bogota_Elevation_UP*",
+    "I2_Cold_Bogota_Elevation_UP*",
+    "I3_cold_Bogota_Elevation_processed_cropped_ROI*",
+    "I4_cold_LaVega_Elevation_UP*",
+    "I4_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "I6_Cold_LaVega_Elevation_UP*",
+    "I7_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "I9_cold_Bogota_Elevation_processed_cropped_ROI*",
+    "J1_cold_vega_Elevation_processed_cropped_ROI*",
+    "J2_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "J5_Cold_LaVega_Elevation_UP*",
+    "J5_High_Bogota_Elevation_processed_cropped_ROI*",
+    "J5_High_Vega_Elevation_UP*",
+]
+
+
 def main():
     all_valleys = []
     for filename, data in load_data():
+        if any(fnmatch(filename.lower(), pattern.lower()) for pattern in Exclude):
+            print(f"Excluded: {filename}")
+            continue
         print(f"\nProcessing {filename}")
         Characters = filename.split("_")
         Snail = Characters[0]
@@ -63,7 +205,7 @@ def main():
         else:
             Temperature = "40C"
         Site = "LaVega" if Site != "Bogota" else Site
-        valleys, processed = find_valleys(data)
+        valleys, processed = find_valleys(data, filename)
         valleys["source_file"] = filename
         valleys["Snail"] = Snail
         valleys["Temperature"] = Temperature
@@ -92,18 +234,22 @@ def load_data():
             yield file, data
 
 
-def find_valleys(data):
+def find_valleys(data, filename):
     signal = data["Mean(Ventricle)"].values
     time = data["time"].values
     smoothed = savgol_filter(signal, 25, 5)
     trend = lowess(smoothed, time, frac=0.08, return_sorted=False)
     inverted = -smoothed
     valley_indices, _ = find_peaks(inverted)
+    if any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case):
+        threshold = 0.98 * trend[valley_indices]
+        min_dist = 18
+    else:
+        threshold = trend[valley_indices]
+        min_dist = 10
     valley_values = smoothed[valley_indices]
-    threshold = trend[valley_indices]
     valid = valley_values < threshold
     valley_indices = valley_indices[valid]
-    min_dist = 10
     filtered = []
 
     if len(valley_indices) > 0:
