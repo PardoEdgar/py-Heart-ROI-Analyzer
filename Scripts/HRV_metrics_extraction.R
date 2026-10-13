@@ -6,7 +6,7 @@ library(readxl)
 library(RHRV)
 library(tidyverse)
 
-all_valleys <- read_csv("C:/Users/jandr/Videos/videos prueba/data_extraction/non_filtered_data/all_valleys.csv")
+all_valleys <- read_csv("C:/Users/jandr/Videos/videos prueba/data_extraction/filtered_valleys/all_valleys.csv")
 Snail_size <- read_csv("C:/Users/jandr/OneDrive - Universidad del rosario/Vega_exp_Snail_T_exp/Data/Size_data/Exp_2/Snail_size.csv")
 all_valleys$time <- as.numeric(all_valleys$time)
 
@@ -75,14 +75,8 @@ CV_data <- RR_data %>%
 HRV_metrics_total <- HRV_metrics_total %>%
   left_join(CV_data, by = c("Temperature", "Snail", "Site", "Gradient"))
 HRV_metrics_total$Temperature_numeric_C <-  case_when(
-    HRV_metrics_total$Temperature == "Cold" ~ 3.5,
-    HRV_metrics_total$Temperature == "ENV" ~ 22,
-    HRV_metrics_total$Temperature == "High" ~ 40
+    HRV_metrics_total$Temperature == "3.5C" ~ 3.5,
+    HRV_metrics_total$Temperature == "22C" ~ 22,
+    HRV_metrics_total$Temperature == "40C" ~ 40
 )
-HRV_metrics_total_total <- HRV_metrics_total |> left_join(Snail_size, by="Snail")
-
-HRV_metrics_total_total <- HRV_metrics_total_total |>
-   group_by(Snail) |> filter(n() >= 12) |> ungroup()
-
-HRV_metrics_total_total |>
-  count(Snail) |> nrow()
+HRV_metrics_total <- HRV_metrics_total |> left_join(Snail_size, by="Snail")
