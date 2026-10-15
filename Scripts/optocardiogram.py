@@ -129,8 +129,18 @@ Exclude = [
     "K6_High_Vega_Elevation_UP*",
     "K8_High_Lavega_Elevation_processed_cropped_ROI*",
     "K9_High_Lavega_Elevation_processed_cropped_ROI*",
+    "A4_Cold_LaVega_Elevation_UP*",
+    "C5_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "H8_High_Vega_Elevation_up*",
+    "B7_High_Bogota_Elevation_processed_cropped_ROI*",
+    "E4_Cold_LaVega_Elevation_UP*",
+    "A3_ENV_Bogota_Elevation_UP*",
+    "A2_High_Bogota_Elevation_processed_cropped_ROI*",
+    "A3_ENV_Vega_Elevation_UP*",
+    "G3_ENV_Bogota_Elevation_UP*",
+    "E8_Cold_LaVega_Elevation_UP*",
 ]
-Special_case = [
+Special_case_1 = [
     "A3_Cold_Bogota_Elevation_processed_cropped_ROI*",
     "A3_ENV_Bogota_Elevation_UP*",
     "B2_Cold_LaVega_Elevation_UP*",
@@ -140,16 +150,13 @@ Special_case = [
     "B4_Cold_Vega_Elevation_processed_cropped_ROI*",
     "B6_Cold_Vega_Elevation_processed_cropped_ROI*",
     "B7_Cold_LaVega_Elevation_UP*",
-    "B7_High_Bogota_Elevation_processed_cropped_ROI*",
     "C1_Cold_Bogota_Elevation_UP*",
     "C3_ENV_Bogota_Elevation_UP*",
     "C6_ENV_Bogota_Elevation_processed_cropped_ROI*",
     "C8_High_Bogota_Elevation_processed_cropped_ROI*",
     "D4_High_Vega_Elevation_UP*",
     "D7_Cold_LaVega_Elevation_UP*",
-    "E2_ENV_Bogota_Elevation_processed_cropped_ROI*",
     "E3_ENV_Bogota_Elevation_processed_cropped_ROI*",
-    "E4_Cold_LaVega_Elevation_UP*",
     "E4_Cold_Vega_Elevation_processed_cropped_ROI*",
     "E5_Cold_Bogota_Elevation_UP*",
     "E6_Cold_Bogota_Elevation_UP*",
@@ -180,6 +187,24 @@ Special_case = [
     "J5_Cold_LaVega_Elevation_UP*",
     "J5_High_Bogota_Elevation_processed_cropped_ROI*",
     "J5_High_Vega_Elevation_UP*",
+    "A4_High_Bogota_Elevation_UP*",
+    "A5_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "B2_Env_LaVega_Elevation_processed_cropped_ROI*",
+    "E7_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "F2_High_Bogota_Elevation_processed_cropped_ROI*",
+    "G2_Cold_Bogota_Elevation_UP*",
+    "G2_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "G2_ENV_Bogota_Elevation_UP*",
+    "I4_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "I5_ENV_LaVega_Elevation_UP*",
+    "I8_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "I9_High_Vega_Elevation_UP*",
+    "K3_ENV_Bogota_Elevation_processed_cropped_ROI*",
+    "K5_Cold_Bogota_Elevation_processed_cropped_ROI*",
+]
+
+Special_case_2 = [
+    "E2_ENV_Bogota_Elevation_processed_cropped_ROI*",
 ]
 
 
@@ -241,8 +266,11 @@ def find_valleys(data, filename):
     trend = lowess(smoothed, time, frac=0.08, return_sorted=False)
     inverted = -smoothed
     valley_indices, _ = find_peaks(inverted)
-    if any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case):
+    if any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case_1):
         threshold = 0.98 * trend[valley_indices]
+        min_dist = 18
+    elif any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case_2):
+        threshold = 0.95 * trend[valley_indices]
         min_dist = 18
     else:
         threshold = trend[valley_indices]
