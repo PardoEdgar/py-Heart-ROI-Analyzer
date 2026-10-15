@@ -162,7 +162,6 @@ Special_case_1 = [
     "E6_Cold_Bogota_Elevation_UP*",
     "E7_Cold_LaVega_Elevation_UP*",
     "E7_High_Bogota_Elevation_processed_cropped_ROI*",
-    "F2_High_Bogota_Elevation_UP*",
     "F5_Cold_Bogota_Elevation_UP*",
     "F7_Cold_Bogota_Elevation_UP*",
     "F8_Cold_Bogota_Elevation_UP*",
@@ -201,10 +200,23 @@ Special_case_1 = [
     "I9_High_Vega_Elevation_UP*",
     "K3_ENV_Bogota_Elevation_processed_cropped_ROI*",
     "K5_Cold_Bogota_Elevation_processed_cropped_ROI*",
+    "A6_env_LaVega_Elevation_UP*",
+    "C8_Cold_Vega_Elevation_processed_cropped_ROI*",
+    "D7_High_Vega_Elevation_UP*",
+    "H6_High_Vega_Elevation_UP*",
 ]
 
 Special_case_2 = [
     "E2_ENV_Bogota_Elevation_processed_cropped_ROI*",
+]
+Special_case_3 = [
+    "C1_Cold_LaVega_Elevation_UP*",
+    "C6_ENV_Vega_Elevation_processed_cropped_ROI*",
+    "D3_High_Vega_Elevation_UP*",
+]
+
+Special_case_4 = [
+    "D8_ENV_LaVega_Elevation_UP*",
 ]
 
 
@@ -271,6 +283,13 @@ def find_valleys(data, filename):
         min_dist = 18
     elif any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case_2):
         threshold = 0.95 * trend[valley_indices]
+        min_dist = 18
+    elif any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case_3):
+        threshold = 0.99 * trend[valley_indices]
+        min_dist = 18
+    elif any(fnmatch(filename.lower(), pattern.lower()) for pattern in Special_case_4):
+        trend = lowess(smoothed, time, frac=0.03, return_sorted=False)
+        threshold = 0.98 * trend[valley_indices]
         min_dist = 18
     else:
         threshold = trend[valley_indices]
