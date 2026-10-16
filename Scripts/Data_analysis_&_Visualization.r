@@ -1,11 +1,3 @@
----
-title: "Pressure"
-author: "E. Alejandro Pardo"
-date: "2025-10-05"
-output: html_document
----
-
-knitr::opts_chunk$set(echo = TRUE)
 library(readxl)
 library(ggrepel)
 library(corrplot)
@@ -17,7 +9,42 @@ library(ggplot2)
 library(e1071)
 library(scales)
 library(gridExtra)
+###################
+#Exp_1
+#####################
+data_exp_1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="HRV_metrics")
+view(data_exp_1)
+x <- 1
+plots <- list()
+data_exp_1$Temperature <- factor(data_exp_1$Temperature, levels = c("3.5C","22C","40C"))
+colors <- c("darkblue", "orange", "red")
+for (y in 6:11)  {
 
+  name <- paste0("plot","_",x)
+  plot <- ggplot(data_exp_1) + geom_density(aes(x=.data[[names(data_exp_1)[y]]],color= Temperature, fill = Temperature), alpha = 0.5)+
+  facet_grid(cols = vars(Site), rows = vars(Gradient)) +
+    scale_color_manual(values=colors)+
+    scale_fill_manual(values=colors)+
+  theme_classic()
+  
+  assign(name, plot)
+  x <- x+1
+  plots[[name]] <- plot
+  
+}
+
+grid.arrange(grobs= plots, ncol = 2, nrow= 3) 
+
+
+ggplot(data_exp_1, aes(x=Temperature_numeric_C,color = interaction(Site,Gradient), y=MeanHR)) + 
+  geom_jitter(aes(group=interaction(Temperature,Site,Gradient)),alpha = 0.4, size = 0.4, width = 0.3) + 
+  geom_boxplot(aes(group=interaction(Temperature,Site,Gradient)))+
+  geom_smooth()+ 
+  theme_classic() 
+
+###################
+#Exp_2
+#####################
 
 setwd("C:/Users/jandr/Downloads")
 list.files()
@@ -114,18 +141,6 @@ posthoc
 summary(posthoc)
 
 
-HRV_metrics <- read_csv("C:/Users/jandr/Videos/videos prueba/data_extraction/HRV_metrics.csv")
-colnames(HRV_metrics)
-
-HRV_metrics_num <- HRV_metrics %>%
-  mutate(
-    Temperature = recode(
-      Temperature,
-      "Cold" = 3,
-      "ENV" = 22,
-      "High" = 40
-    )
-  )
 ##Temperature mass
 
 colnames(HRV_metrics)
