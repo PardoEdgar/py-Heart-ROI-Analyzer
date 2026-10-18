@@ -29,14 +29,14 @@ Functions:
         Lastly, the time and value of valid valleys found in the signal are saved for further analysis.
 """
 
-from cv2 import split
+import cv2
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import savgol_filter, find_peaks
 from statsmodels.nonparametric.smoothers_lowess import lowess
-from fnmatch import fnmatch
+import fnmatch
 
 
 FOLDER = r"C:\Users\jandr\Videos\videos prueba\data_extraction"
