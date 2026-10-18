@@ -41,12 +41,12 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 - matplotlib
 - sciPy
 - statsmodels
+- fnmatch
 
 
 ## R
 - tidyverse
-- ggrepel
-- gridExtra
+- readxl
 - RHRV
   
 ## ImageJ
