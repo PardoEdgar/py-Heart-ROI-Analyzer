@@ -9,10 +9,15 @@ library(ggplot2)
 library(e1071)
 library(scales)
 library(gridExtra)
-###################
+library(glmmTMB)
+########glmmTMB###################
 #Exp_1
 #####################
 data_exp_1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="HRV_metrics")
+data_exp_1 <- data_exp_1 |>  dplyr::mutate(Temperature = factor(Temperature), Site = factor(Site),
+                                    Gradient = factor(Gradient))
+  
+
 view(data_exp_1)
 x <- 1
 plots <- list()
@@ -36,11 +41,55 @@ for (y in 6:11)  {
 grid.arrange(grobs= plots, ncol = 2, nrow= 3) 
 
 
-ggplot(data_exp_1, aes(x=Temperature_numeric_C,color = interaction(Site,Gradient), y=MeanHR)) + 
-  geom_jitter(aes(group=interaction(Temperature,Site,Gradient)),alpha = 0.4, size = 0.4, width = 0.3) + 
-  geom_boxplot(aes(group=interaction(Temperature,Site,Gradient)))+
-  geom_smooth()+ 
-  theme_classic() 
+shapes = c("solid","dashed")
+ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) + 
+  geom_boxplot(aes(linetype = Gradient, group=interaction(Temperature,Gradient)), color = "black",position = position_dodge(width = 5), width = 4)+
+  geom_point(aes(group=interaction(Temperature,Gradient)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_smooth(aes(linetype = Gradient, group = Gradient),color = "black")+
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Gradient,y=Mean),color="red",position = position_dodge(width = 5))+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Gradient), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  facet_grid(cols=vars(Site))+
+  scale_linetype_manual(values = shapes) +
+  theme_classic() +
+  theme(legend.position = "top") 
+
+
+
+ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) + 
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_smooth(aes(linetype = Site, group = Site),color = "black")+
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  
+  facet_grid(cols=vars(Gradient))+
+  scale_linetype_manual(values = shapes) +
+  theme_classic() +
+  theme(legend.position = "top") 
+
+
+colnames(data_exp_1)
+
+Model <- glmmTMB(MeanHR ~ Temperature + Site + Gradient +(1|Snail) ,data=data_exp_1, family = gaussian())
+summary(Model)
+Model_res <- simulateResiduals(Model , n=2000)
+plot(Model_res)
+
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)),Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)), Snail = data_exp_1$Snail[1])
+
+predictions <- predict(Model, newdata = data, re.form = ~0, se.fit=TRUE) 
+
+Plot_data <- data |>  data.frame(
+  Mean = predictions$fit,
+  SE = predictions$se.fit) |> dplyr::mutate(
+  Max_CI = Mean + 1.96 * SE, 
+  Min_CI = Mean - 1.96 * SE, 
+  Temperature = factor(Temperature, levels = c("3.5C","22C","40C")),
+  Temperature_numeric_C = as.numeric(
+      sub("C", "", as.character(Temperature))))
+
+
+
 
 ###################
 #Exp_2
