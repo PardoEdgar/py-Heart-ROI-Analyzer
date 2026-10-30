@@ -498,16 +498,16 @@ mass_CV <- ggplot(data_exp_1, aes(x = Body_mass_g, y = CV, color = Temperature))
 
 
 
-###################
+######################
 #Exp_2
-#####################
+######################
 Exp_2_HR <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_2.xlsx", sheet="HR")
 Exp_2_Sensor <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_2.xlsx", sheet="Sensors")
-Exp_2_HR$Elevation <- factor(data_exp_2$Elevation,
-                            levels = c("310","910", "1560","2300", "2560", "3010"))
+Exp_2_HR$Elevation <- factor(as.numeric(as.character(Exp_2_HR$Elevation),
+                            levels = c("310","910", "1560","2300", "2560", "3010")))
 
 plot_1 <-  ggplot(Exp_2_Sensor, aes(x= Time_s, y=Pressure_mmHg))+ 
-  geom_point(size = 0.3, alpha=0.4) + geom_line(size = 0.3, alpha=0.4)  +
+  geom_point(size = 0.3, alpha=0.4) + geom_line(size = 0.3, alpha=0.4)+
   xlab("Time (s)") + ylab("Atmospheric pressure (mmHg)") +
   geom_vline(xintercept = 2630,, linetype = "dashed")+
   geom_vline(xintercept = 4260,, linetype = "dashed")+
@@ -565,10 +565,27 @@ ggplot(Exp_2_HR,
   )
 
 ggplot(Exp_2_HR, aes(x=(HR), color = Gradient)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
-Linear_model <- glmmTMB(log(HR) ~ Elevation + Gradient, data=Exp_2_HR, family = gaussian())
+
+Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Gradient, dispformula = ~ Elevation * Gradient,
+             data = Exp_2_HR)
+
+Linear_model_2 <- glmmTMB(HR ~ Elevation * Gradient, dispformula = ~ Elevation * Gradient,
+                        data = Exp_2_HR)
+AIC(Linear_model_1, Linear_model_2)
 summary(Linear_model)
 
-qqnorm(resid(Linear_model))
-qqline(resid(Linear_model))
+qqnorm(resid(Linear_model_1))
+qqline(resid(Linear_model_1))
 
+res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
+plot(res_linear_model)
 
+emm_elevation <- emmeans(Linear_model_1, ~ Elevation | Gradient, type = "response")
+contrast(emm_elevation, "revpairwise", adjust = "bonferroni") |> confint()
+Values_grad <- contrast(emm_elevation, "revpairwise", adjust = "bonferroni") 
+summary(Values_grad)
+
+emm_gradient <- emmeans(Linear_model_1, ~Gradient | Elevation, type = "response")
+contrast(emm_gradient, "revpairwise", adjust = "bonferroni") |> confint()
+Values_grad <- contrast(emm_gradient, "revpairwise", adjust = "bonferroni") 
+summary(Values_grad)
