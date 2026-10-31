@@ -606,3 +606,12 @@ emm_Direction <- emmeans(Linear_model_1, ~ Direction | Elevation, type = "respon
 contrast(emm_Direction, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_Direction, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
+
+
+
+##########Sensor_data_exp_1
+data_sensors_exp1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="Sensors")
+summary_Data <- data_sensors_exp1 |> select(-contains("Time")) |> summarise(across(where(is.numeric),list(Mean = ~mean(.x, na.rm = TRUE), SD =~sd(.x,na.rm = TRUE)))) 
+summary_Data <- summary_Data |>  pivot_longer(cols =everything(),names_to = c("Variable", ".value"), names_pattern = "^(.*)_(Mean|SD)$") 
+View(summary_Data)
+write.csv(summary_Data, "C:/Users/jandr/Downloads/summary_Data.csv")
