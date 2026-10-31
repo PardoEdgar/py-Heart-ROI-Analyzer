@@ -11,7 +11,7 @@ library(DHARMa)
 #MeanHR
 data_exp_1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="HRV_metrics")
 data_exp_1 <- data_exp_1 |>  dplyr::mutate(Temperature = factor(Temperature), Site = factor(Site),
-                                    Gradient = factor(Gradient))
+                                    Direction = factor(Direction))
 x <- 1
 plots <- list()
 data_exp_1$Temperature <- factor(data_exp_1$Temperature, levels = c("3.5C","22C","40C"))
@@ -20,7 +20,7 @@ for (y in 6:11)  {
   name <- paste0("plot","_",x)
   variable <- 
   plot <- ggplot(data_exp_1) + geom_density(aes(x=.data[[names(data_exp_1)[y]]],color= Temperature, fill = Temperature), alpha = 0.5)+
-  facet_grid(cols = vars(Site), rows = vars(Gradient)) +
+  facet_grid(cols = vars(Site), rows = vars(Direction)) +
     scale_color_manual(values=colors)+
     scale_fill_manual(values=colors)+
   theme_classic()
@@ -34,8 +34,8 @@ for (y in 6:11)  {
 grid.arrange(grobs= plots, ncol = 2, nrow= 3) 
 data_exp_1$Body_mass_g
 
-Model_1 <- glmmTMB(log(MeanHR) ~ Temperature + Site + Gradient + Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(MeanHR) ~ Temperature * Site  * Gradient * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_1 <- glmmTMB(log(MeanHR) ~ Temperature + Site + Direction + Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_2 <- glmmTMB(log(MeanHR) ~ Temperature * Site  * Direction * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 
 summary(Model_1)
 summary(Model_2)
@@ -54,7 +54,7 @@ plot(Model_res)
 
 AIC(Model_1, Model_2)
 
-data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_2, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
@@ -74,7 +74,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) +
   geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
   geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
   
-  facet_grid(cols=vars(Gradient))+
+  facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
   theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
   theme(legend.position = "top")
@@ -82,21 +82,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) +
 
 emm_tem <- emmeans(
   Model_2,
-  ~ Temperature | Site * Gradient, type = "response")
+  ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_2, 
-  ~ Site | Gradient * Temperature, type = "response")
+  ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_2,
-  ~ Gradient | Site * Temperature, type = "response"
+  ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
@@ -105,8 +105,8 @@ summary(Values_grad, infer = TRUE)
 ####################
 #NNi
 data_exp_1$NNi
-Model_1 <- glmmTMB(log(NNi) ~ Temperature + Site + Gradient + Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(NNi) ~ Temperature * Site  * Gradient * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_1 <- glmmTMB(log(NNi) ~ Temperature + Site + Direction + Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_2 <- glmmTMB(log(NNi) ~ Temperature * Site  * Direction * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 
 summary(Model_1)
 summary(Model_2)
@@ -125,7 +125,7 @@ plot(Model_res)
 
 AIC(Model_1, Model_2)
 
-data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_2, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
@@ -145,7 +145,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=NNi)) +
   geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
   geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
   
-  facet_grid(cols=vars(Gradient))+
+  facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
   theme_classic() + labs(x = "Temperature (°C)", y= "NN Intervals (ms)")+
   theme(legend.position = "top")
@@ -153,21 +153,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=NNi)) +
 
 emm_tem <- emmeans(
   Model_2,
-  ~ Temperature | Site * Gradient, type = "response")
+  ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_2, 
-  ~ Site | Gradient * Temperature, type = "response")
+  ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_2,
-  ~ Gradient | Site * Temperature, type = "response"
+  ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
@@ -176,8 +176,8 @@ summary(Values_grad, infer = TRUE)
 ###############33
 ###CV
 data_exp_1$CV
-Model_1 <- glmmTMB(log(CV) ~ Temperature + Site + Gradient  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(CV) ~ Temperature * Site  * Gradient * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_1 <- glmmTMB(log(CV) ~ Temperature + Site + Direction  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_2 <- glmmTMB(log(CV) ~ Temperature * Site  * Direction * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 
 summary(Model_1)
 summary(Model_2)
@@ -196,7 +196,7 @@ plot(Model_res)
 
 AIC(Model_1, Model_2)
 
-data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
@@ -216,28 +216,28 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) +
   geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
   geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
   
-  facet_grid(cols=vars(Gradient))+
+  facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) + 
   theme_classic() + labs(x = "Temperature (°C)", y= "CV (%)")+
   theme(legend.position = "top")
 
 emm_tem <- emmeans(
   Model_2,
-  ~ Temperature | Site * Gradient, type = "response")
+  ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_2, 
-  ~ Site | Gradient * Temperature, type = "response")
+  ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_2,
-  ~ Gradient | Site * Temperature, type = "response"
+  ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
@@ -245,12 +245,12 @@ summary(Values_grad, infer = TRUE)
 
 ######
 #RMSSD
-ggplot(data_exp_1, aes(x = log(RMSSD), color = Temperature)) + geom_density() + theme_classic() + facet_grid(cols = vars(interaction(Site, Gradient)))
+ggplot(data_exp_1, aes(x = log(RMSSD), color = Temperature)) + geom_density() + theme_classic() + facet_grid(cols = vars(interaction(Site, Direction)))
 data_exp_1$Body_mass_g
 library(glmmTMB)
 
 M0 <- glmmTMB(
-  log(RMSSD) ~ Temperature * Site * Gradient +
+  log(RMSSD) ~ Temperature * Site * Direction +
     (1 | Snail),
   dispformula = ~ Temperature,
   data = data_exp_1,
@@ -292,12 +292,12 @@ Model_res <- simulateResiduals(Model_1, n = 2000)
 plot(Model_res)                                        # residuals vs predicted (the real test)
 plotResiduals(Model_res, data_exp_1$Temperature)
 plotResiduals(Model_res, data_exp_1$Site)
-plotResiduals(Model_res, data_exp_1$Gradient)
+plotResiduals(Model_res, data_exp_1$Direction)
 plotResiduals(Model_res, data_exp_1$Body_mass_g)
 testDispersion(Model_res)
 hist(log(data_exp_1$RMSSD))
 
-data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_2, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
@@ -317,7 +317,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=RMSSD)) +
   geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
   geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
   
-  facet_grid(cols=vars(Gradient))+
+  facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
   theme_classic() + labs(x = "Temperature (°C)", y= "RMSSD (ms)")+
   theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
@@ -325,21 +325,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=RMSSD)) +
 
 emm_tem <- emmeans(
   Model_2,
-  ~ Temperature | Site * Gradient, type = "response")
+  ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_2, 
-  ~ Site | Gradient * Temperature, type = "response")
+  ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_2,
-  ~ Gradient | Site * Temperature, type = "response"
+  ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
@@ -347,8 +347,8 @@ summary(Values_grad, infer = TRUE)
 
 #SDNN
 data_exp_1$Body_mass_g
-Model_1 <- glmmTMB(log(SDNN) ~ Temperature + Site + Gradient + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(SDNN) ~ Temperature * Site  * Gradient * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_1 <- glmmTMB(log(SDNN) ~ Temperature + Site + Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_2 <- glmmTMB(log(SDNN) ~ Temperature * Site  * Direction * Body_mass_g + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 
 summary(Model_1)
 summary(Model_2)
@@ -367,7 +367,7 @@ plot(Model_res)
 
 AIC(Model_1, Model_2)
 
-data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
@@ -387,7 +387,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) +
   geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
   geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
   
-  facet_grid(cols=vars(Gradient))+
+  facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
   theme_classic() + labs(x = "Temperature (°C)", y= "SDNN (ms)")+
   theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
@@ -395,21 +395,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) +
 
 emm_tem <- emmeans(
   Model_2,
-  ~ Temperature | Site * Gradient, type = "response")
+  ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_2, 
-  ~ Site | Gradient * Temperature, type = "response")
+  ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_2,
-  ~ Gradient | Site * Temperature, type = "response"
+  ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
@@ -419,8 +419,8 @@ summary(Values_grad, infer = TRUE)
 
 #pNN50
 data_exp_1$Body_mass_g
-Model_1 <- glmmTMB((pNN50) ~ Temperature + Site + Gradient + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
-Model_2 <- glmmTMB((pNN50) ~ Temperature * Site  * Gradient * Body_mass_g + (1 | Snail) ,data=data_exp_1, family = gaussian())
+Model_1 <- glmmTMB((pNN50) ~ Temperature + Site + Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_2 <- glmmTMB((pNN50) ~ Temperature * Site  * Direction * Body_mass_g + (1 | Snail) ,data=data_exp_1, family = gaussian())
 
 summary(Model_1)
 summary(Model_2)
@@ -439,7 +439,7 @@ plot(Model_res)
 
 AIC(Model_1, Model_2)
 
-data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Gradient = factor(levels(data_exp_1$Gradient), levels=levels(data_exp_1$Gradient)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
+data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
@@ -459,7 +459,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=pNN50)) +
   geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
   geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
   
-  facet_grid(cols=vars(Gradient))+
+  facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
   theme_classic() + labs(x = "Temperature (°C)", y= "pNN50 (%)")+
   theme(legend.position = "top")
@@ -467,21 +467,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=pNN50)) +
 
 emm_tem <- emmeans(
   Model_2,
-  ~ Temperature | Site * Gradient, type = "response")
+  ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_2, 
-  ~ Site | Gradient * Temperature, type = "response")
+  ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_2,
-  ~ Gradient | Site * Temperature, type = "response"
+  ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
@@ -559,16 +559,16 @@ ggplot(Exp_2_HR,
        aes(x = Elevation,
            y = HR)) +
   geom_boxplot(
-    aes(group = interaction(Elevation, Gradient),
-        linetype = Gradient,  color = Gradient),
+    aes(group = interaction(Elevation, Direction),
+        linetype = Direction,  color = Direction),
     position = position_dodge2(padding = 0.4),  size = 0.6, width = 0.3,
     outlier.shape = NA
   ) +
   geom_point(
-    aes(group = interaction(Elevation, Gradient)), position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1), size = 0.8, alpha = 0.8
+    aes(group = interaction(Elevation, Direction)), position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1), size = 0.8, alpha = 0.8
   ) + geom_smooth(
-    aes(group = Gradient,
-        linetype = Gradient, color = Gradient),
+    aes(group = Direction,
+        linetype = Direction, color = Direction),
     se = TRUE,
     #color = "black",
     fill = "grey70",
@@ -581,12 +581,12 @@ ggplot(Exp_2_HR,
     plot.title = element_text(hjust = 0.5, face = "bold")
   )
 
-ggplot(Exp_2_HR, aes(x=(HR), color = Gradient)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
+ggplot(Exp_2_HR, aes(x=(HR), color = Direction)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
 
-Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Gradient, dispformula = ~ Elevation * Gradient,
+Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction, dispformula = ~ Elevation * Direction,
              data = Exp_2_HR)
 
-Linear_model_2 <- glmmTMB(HR ~ Elevation * Gradient, dispformula = ~ Elevation * Gradient,
+Linear_model_2 <- glmmTMB(HR ~ Elevation * Direction, dispformula = ~ Elevation * Direction,
                         data = Exp_2_HR)
 AIC(Linear_model_1, Linear_model_2)
 summary(Linear_model)
@@ -597,13 +597,12 @@ qqline(resid(Linear_model_1))
 res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
 plot(res_linear_model)
 
-emm_elevation <- emmeans(Linear_model_1, ~ Elevation | Gradient, type = "response")
+emm_elevation <- emmeans(Linear_model_1, ~ Elevation | Direction, type = "response")
 contrast(emm_elevation, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_elevation, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
 
-emm_gradient <- emmeans(Linear_model_1, ~Gradient | Elevation, type = "response")
-contrast(emm_gradient, "revpairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_gradient, "revpairwise", adjust = "bonferroni") 
+emm_Direction <- emmeans(Linear_model_1, ~ Direction | Elevation, type = "response")
+contrast(emm_Direction, "revpairwise", adjust = "bonferroni") |> confint()
+Values_grad <- contrast(emm_Direction, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
-{{
