@@ -24,8 +24,8 @@ extract_HRV_metrics <- function(hrv_object, Snail) {
     )
   }
 
-data_by_labels <-all_valleys %>% group_by(Temperature, Site, Gradient, Snail) %>% group_split()
-Data_labels <- all_valleys %>% group_by(Temperature, Site, Gradient, Snail)  %>%  group_keys()
+data_by_labels <-all_valleys %>% group_by(Temperature, Site, Direction, Snail) %>% group_split()
+Data_labels <- all_valleys %>% group_by(Temperature, Site, Direction, Snail)  %>%  group_keys()
 results_HRV <- lapply(data_by_labels, function(df_snail) {
   HRV <- CreateHRVData()
   HRV <- LoadBeatVector(HRV, df_snail$time)
@@ -39,14 +39,14 @@ names(results_HRV) <- paste0(
   Data_labels$Temperature,
 "_",
   Data_labels$Snail, "_", 
-  Data_labels$Gradient, "_",
+  Data_labels$Direction, "_",
   Data_labels$Site
 )
 
 HRV_metrics_total <- imap_dfr(results_HRV, ~ extract_HRV_metrics(.x, .y))
 
 HRV_metrics_total <- HRV_metrics_total %>%
-  tidyr::separate(Snail, into = c("Temperature", "Snail","Gradient", "Site"), sep = "_")
+  tidyr::separate(Snail, into = c("Temperature", "Snail","Direction", "Site"), sep = "_")
 
 extract_RR <- function(hrv_object, Snail) {
     RR_ms <- hrv_object$Beat
@@ -59,7 +59,7 @@ extract_RR <- function(hrv_object, Snail) {
 
 RR_data <- imap_dfr(results_HRV, ~ extract_RR(.x, .y))
 RR_data <- RR_data %>%
-  tidyr::separate(Snail, into = c("Temperature", "Snail","Gradient", "Site"), sep = "_")
+  tidyr::separate(Snail, into = c("Temperature", "Snail","Direction", "Site"), sep = "_")
 
 cv_function <- function(rr) {
   mean <- mean(rr)
@@ -69,11 +69,11 @@ cv_function <- function(rr) {
 }
 
 CV_data <- RR_data %>%
-  group_by(Temperature, Snail, Site, Gradient) %>%
+  group_by(Temperature, Snail, Site, Direction) %>%
   summarise(CV = cv_function(RRms), .groups = "drop")
 
 HRV_metrics_total <- HRV_metrics_total %>%
-  left_join(CV_data, by = c("Temperature", "Snail", "Site", "Gradient"))
+  left_join(CV_data, by = c("Temperature", "Snail", "Site", "Direction"))
 HRV_metrics_total$Temperature_numeric_C <-  case_when(
     HRV_metrics_total$Temperature == "3.5C" ~ 3.5,
     HRV_metrics_total$Temperature == "22C" ~ 22,
