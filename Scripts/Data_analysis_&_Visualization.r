@@ -245,15 +245,30 @@ summary(Values_grad, infer = TRUE)
 
 ######
 #RMSSD
+ggplot(data_exp_1, aes(x = log(RMSSD), color = Temperature)) + geom_density() + theme_classic() + facet_grid(cols = vars(interaction(Site, Gradient)))
 data_exp_1$Body_mass_g
-Model_1 <- glmmTMB(log(RMSSD) ~ Temperature + Site + Gradient + Body_mass_g  + (1 | Snail ) ,dispformula = ~Temperature + Gradient  + Site,data=data_exp_1, family = gaussian())
-Model_1 <- glmmTMB(RMSSD ~ Temperature + Site + Gradient + Body_mass_g + (1|Snail),
-               dispformula = ~ Temperature + Gradient,
-               family = Gamma("log"), data = data_exp_1)
+library(glmmTMB)
+
+M0 <- glmmTMB(
+  log(RMSSD) ~ Temperature * Site * Gradient +
+    (1 | Snail),
+  dispformula = ~ Temperature,
+  data = data_exp_1,
+  family = gaussian()
+)
 
 
+res <- simulateResiduals(M1, n = 2000)
+
+plot(res)
+fixef(M0)$disp
+summary(M0)
+Variance_summary
+
+plot(res_model_1)
+
+plotResiduals(Model_1,  form = data_exp_1$Temperature)
 # normalidad
-qqnorm(m_ig, ~ resid(., type = "pearson") | Temperature)
 
 library(lme4)
 summary(Model_1)
@@ -295,7 +310,7 @@ Plot_data <- data |>  data.frame(
       sub("C", "", as.character(Temperature)))) |> mutate(Mean = exp(Mean), Max_CI=exp(Max_CI), Min_CI=exp(Min_CI))
 
 shapes = c("solid","dashed")
-ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) + 
+ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=RMSSD)) + 
   geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
   geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
@@ -304,8 +319,8 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) +
   
   facet_grid(cols=vars(Gradient))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
-  theme(legend.position = "top")
+  theme_classic() + labs(x = "Temperature (°C)", y= "RMSSD (ms)")+
+  theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
 
 
 emm_tem <- emmeans(
@@ -374,8 +389,8 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) +
   
   facet_grid(cols=vars(Gradient))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
-  theme(legend.position = "top")
+  theme_classic() + labs(x = "Temperature (°C)", y= "SDNN (ms)")+
+  theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
 
 
 emm_tem <- emmeans(
@@ -473,7 +488,9 @@ Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni")
 summary(Values_grad, infer = TRUE)
 
 ##Temperature vs mass
-
+Model_1_mass <- glmmTMB(MeanHR ~ Temperature + Body_mass_g + (1 | Snail), data = data_exp_1, family = gaussian())
+res <- simulateResiduals(Model_1_mass, n =2000)
+plot(res)
 mass_HR <- ggplot(data_exp_1, aes(x = Body_mass_g, y = MeanHR, color = Temperature)) +
   geom_point(size=0.8,alpha = 0.1) +
   geom_smooth(method = "lm", se = T, linewidth = 1, alpha=0.3, fullrange=TRUE) + labs(
@@ -589,3 +606,4 @@ emm_gradient <- emmeans(Linear_model_1, ~Gradient | Elevation, type = "response"
 contrast(emm_gradient, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_gradient, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
+{{
