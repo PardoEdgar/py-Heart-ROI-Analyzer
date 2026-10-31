@@ -232,9 +232,9 @@ def main():
         Temperature = Characters[1]
         Site = Characters[2]
         if "UP" in filename:
-            Gradient = "UP"
+            Direction = "Ascending"
         else:
-            Gradient = "DOWN"
+            Direction = "Descending"
         if Temperature == "Cold":
             Temperature = "3.5C"
         elif Temperature == "ENV":
@@ -247,7 +247,7 @@ def main():
         valleys["Snail"] = Snail
         valleys["Temperature"] = Temperature
         valleys["Site"] = Site
-        valleys["Gradient"] = Gradient
+        valleys["Direction"] = Direction
         all_valleys.append(valleys)
         visualize_and_save(processed, valleys, filename)
     all_valleys = pd.concat(all_valleys, ignore_index=True)
