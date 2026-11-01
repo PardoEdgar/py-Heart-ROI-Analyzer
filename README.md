@@ -68,15 +68,18 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 - Eva Valentina Montesdeoca
 
    School of Sciences and Engineering, Universidad del Rosario, Colombia
+  
 - J.P. Hernandez
 
    School of Sciences and Engineering, Universidad del Rosario, Colombia
-- Andre J. Riveros
-
-   School of Sciences and Engineering, Universidad del Rosario, Colombia
+  
 - Natalia Buitrago-Ricaurte
 
   School of Medicine and Health Sciences, Universidad del Rosario, Colombia
+  
+- Andre J. Riveros
+
+   School of Sciences and Engineering, Universidad del Rosario, Colombia
 
 ---
 
