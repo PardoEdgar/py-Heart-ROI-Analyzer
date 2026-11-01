@@ -36,33 +36,73 @@ for (y in 6:11)  {
 grid.arrange(grobs= plots, ncol = 2, nrow= 3) 
 data_exp_1$Body_mass_g
 
+full_model <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail) ,data=data_exp_1, family = gaussian())
 
-Model_1 <- glmmTMB(log(MeanHR) ~ Temperature + Site  +  Direction + Body_mass_g + (1 | Snail  ) ,data=data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
-Model_3 <- glmmTMB(log(MeanHR) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
-Model_4 <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+qqnorm(resid(full_model))
+qqline(resid(full_model))
 
-summary(Model_1)
-summary(Model_2)
+Model_res <- simulateResiduals(full_model, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-qqnorm(resid(Model_3))
-qqline(resid(Model_3))
+var_1 <-update(full_model, dispformula = ~ Temperature  + Direction)
 
-qqnorm(resid(Model_4))
-qqline(resid(Model_4))
+Model_res <- simulateResiduals(var_1, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+var_2 <-update(full_model, dispformula = ~ Temperature  * Direction)
+
+Model_res <- simulateResiduals(var_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+AIC(full_model, var_1, var_2)
+anova(full_model, var_1, var_2)
+Model_1 <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~ Temperature * Direction, family = gaussian())
+Model_2 <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~ Temperature * Direction, family = gaussian())
+Model_3 <- glmmTMB(log(MeanHR) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1,dispformula = ~ Temperature * Direction, family = gaussian())
+Model_4 <- glmmTMB(log(MeanHR) ~ Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~ Temperature * Direction, family = gaussian())
+
+Model_res <- simulateResiduals(Model_1, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
 Model_res <- simulateResiduals(Model_3, n=2000)
-testResiduals(Model_res, data_exp_1$Site)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-Model_res <- simulateResiduals(Model_4 , n=2000)
+
+Model_res <- simulateResiduals(Model_4, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-AIC(Model_3, Model_4)
-anova(Model_3,Model_4)
+AIC(Model_1, Model_2, Model_3, Model_4)
+anova(Model_1, Model_2, Model_3, Model_4)
+
+
+Model <- glmmTMB(log(MeanHR) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1,dispformula = ~ Temperature * Direction, family = gaussian())
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
-predictions <- predict(Model_3, newdata = data, re.form = ~0, se.fit=TRUE) 
+predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
   Mean = predictions$fit,
@@ -88,21 +128,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) +
 
 
 emm_tem <- emmeans(
-  Model_3,
+  Model_1,
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
-  Model_3, 
+  Model_1, 
   ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
-  Model_3,
+  Model_1,
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
@@ -111,27 +151,79 @@ summary(Values_grad, infer = TRUE)
 
 ####################
 #NNi
-data_exp_1$NNi
-Model_1 <- glmmTMB(log(NNi) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(NNi) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 
-summary(Model_1)
-summary(Model_2)
+full_model <- glmmTMB(log(NNi) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail),data=data_exp_1, family = gaussian())
 
-qqnorm(resid(Model_1))
-qqline(resid(Model_1))
+qqnorm(resid(full_model))
+qqline(resid(full_model))
 
-qqnorm(resid(Model_2))
-qqline(resid(Model_2))
-
-Model_res <- simulateResiduals(Model_1 , n=2000)
+Model_res <- simulateResiduals(full_model, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-Model_res <- simulateResiduals(Model_2 , n=2000)
+var_1 <-update(full_model, dispformula = ~Temperature + Site + Direction)
+
+Model_res <- simulateResiduals(var_1, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-AIC(Model_1, Model_2)
-anova(Model_1, Model_2)
+
+var_2 <-update(full_model, dispformula = ~ Temperature * Direction)
+
+Model_res <- simulateResiduals(var_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+var_3 <-update(full_model, dispformula = ~ Temperature * Site * Direction)
+
+Model_res <- simulateResiduals(var_3, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+AIC(full_model, var_1, var_2, var_3)
+anova(full_model, var_1, var_2, var_3)
+
+Model_1 <- glmmTMB(log(NNi) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~  Temperature + Site + Direction, family = gaussian())
+Model_2 <- glmmTMB(log(NNi) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~  Temperature + Site + Direction, family = gaussian())
+Model_3 <- glmmTMB(log(NNi) ~  (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1,dispformula = ~ Temperature + Site + Direction, family = gaussian())
+Model_4 <- glmmTMB(log(NNi) ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~ Temperature + Site + Direction, family = gaussian())
+
+Model_res <- simulateResiduals(Model_1, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_3, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+
+Model_res <- simulateResiduals(Model_4, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+AIC(Model_1, Model_2, Model_3, Model_4)
+anova(Model_1, Model_2, Model_3, Model_4)
+
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
@@ -183,31 +275,54 @@ summary(Values_grad, infer = TRUE)
 
 ###############33
 ###CV
-data_exp_1$CV
-Model_1 <- glmmTMB(log(CV) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(CV) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+full_model <- glmmTMB(log(CV) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail),data=data_exp_1, family = gaussian())
 
-summary(Model_1)
-summary(Model_2)
+qqnorm(resid(full_model))
+qqline(resid(full_model))
 
-qqnorm(resid(Model_1))
-qqline(resid(Model_1))
-
-qqnorm(resid(Model_2))
-qqline(resid(Model_2))
-
-Model_res <- simulateResiduals(Model_1 , n=2000)
+Model_res <- simulateResiduals(full_model, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
 testCategorical(Model_res, data_exp_1$Direction)
-plot(Model_res)
 
-Model_res <- simulateResiduals(Model_2 , n=2000)
-plot(Model_res)
+Model_1 <- glmmTMB(log(CV) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_2 <- glmmTMB(log(CV) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_3 <- glmmTMB(log(CV) ~  (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
+Model_4 <- glmmTMB(log(CV) ~  Temperature + Site + Direction + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
 
-AIC(Model_1, Model_2)
-anova(Model_1, Model_2)
+Model_res <- simulateResiduals(Model_1, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_3, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+
+Model_res <- simulateResiduals(Model_4, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+AIC(Model_1, Model_2, Model_3, Model_4)
+anova(Model_1, Model_2, Model_3, Model_4)
+
+Model <- glmmTMB(log(CV) ~  Temperature + Site + Direction + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
-predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
+predictions <- predict(Model, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
   Mean = predictions$fit,
@@ -232,21 +347,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) +
   theme(legend.position = "top")
 
 emm_tem <- emmeans(
-  Model_1,
+  Model,
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
-  Model_1, 
+  Model, 
   ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
-  Model_1,
+  Model,
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
@@ -329,29 +444,56 @@ Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni")
 summary(Values_grad, infer = TRUE)
 
 #SDNN
-Model_1 <- glmmTMB(log(SDNN) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
+
+full_model <- glmmTMB(log(SDNN) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail),data=data_exp_1, family = gaussian())
+
+qqnorm(resid(full_model))
+qqline(resid(full_model))
+
+Model_res <- simulateResiduals(full_model, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+
+Model_1 <- glmmTMB(log(SDNN) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 Model_2 <- glmmTMB(log(SDNN) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_3 <- glmmTMB(log(SDNN) ~  (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
+Model_4 <- glmmTMB(log(SDNN) ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
 
-summary(Model_1)
-summary(Model_2)
-
-qqnorm(resid(Model_1))
-qqline(resid(Model_1))
-
-qqnorm(resid(Model_2))
-qqline(resid(Model_2))
-
-Model_res <- simulateResiduals(Model_1 , n=2000)
+Model_res <- simulateResiduals(Model_1, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-Model_res <- simulateResiduals(Model_2 , n=2000)
+Model_res <- simulateResiduals(Model_2, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-AIC(Model_1, Model_2)
-anova(Model_1, Model_2)
+Model_res <- simulateResiduals(Model_3, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+
+Model_res <- simulateResiduals(Model_4, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+AIC(Model_1, Model_2, Model_3, Model_4)
+anova(Model_1, Model_2, Model_3, Model_4)
+
+Model_SDNN <- glmmTMB(log(SDNN) ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
-predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
+predictions <- predict(Model_SDNN, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
   Mean = predictions$fit,
@@ -377,21 +519,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) +
 
 
 emm_tem <- emmeans(
-  Model_1,
+  Model_SDNN,
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
-  Model_1, 
+  Model_SDNN, 
   ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
-  Model_1,
+  Model_SDNN,
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
@@ -401,30 +543,77 @@ summary(Values_grad, infer = TRUE)
 
 
 #pNN50
-data_exp_1$Body_mass_g
-Model_1 <- glmmTMB(pNN50 ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(pNN50 ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
 
-summary(Model_1)
-summary(Model_2)
+full_model <- glmmTMB(pNN50 ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail),data=data_exp_1, family = gaussian())
 
-qqnorm(resid(Model_1))
-qqline(resid(Model_1))
+qqnorm(resid(full_model))
+qqline(resid(full_model))
 
-qqnorm(resid(Model_2))
-qqline(resid(Model_2))
-
-Model_res <- simulateResiduals(Model_1 , n=2000)
+Model_res <- simulateResiduals(full_model, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-Model_res <- simulateResiduals(Model_2 , n=2000)
+var_1 <-update(full_model, dispformula = ~Temperature + Direction)
+
+Model_res <- simulateResiduals(var_1, n=2000)
 plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
 
-AIC(Model_1, Model_2)
-anova(Model_1, Model_2)
+
+var_2 <-update(full_model, dispformula = ~ Temperature * Direction)
+
+Model_res <- simulateResiduals(var_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+
+AIC(full_model, var_1, var_2)
+anova(full_model, var_1, var_2)
+
+Model_1 <- glmmTMB(pNN50 ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~Temperature + Direction, family = gaussian())
+Model_2 <- glmmTMB(pNN50 ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~Temperature + Direction, family = gaussian())
+Model_3 <- glmmTMB(pNN50~  (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1,dispformula = ~Temperature + Direction, family = gaussian())
+Model_4 <- glmmTMB(pNN50 ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~Temperature + Direction, family = gaussian())
+
+Model_res <- simulateResiduals(Model_1, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_2, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+Model_res <- simulateResiduals(Model_3, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+
+Model_res <- simulateResiduals(Model_4, n=2000)
+plot(Model_res)
+testCategorical(Model_res, data_exp_1$Temperature)
+testCategorical(Model_res, data_exp_1$Site)
+testCategorical(Model_res, data_exp_1$Direction)
+
+AIC(Model_1, Model_2, Model_3, Model_4)
+anova(Model_1, Model_2, Model_3, Model_4)
+
+Model_pNN50 <- glmmTMB(pNN50 ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~Temperature + Direction, family = gaussian())
+
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
-predictions <- predict(Model_1, newdata = data, re.form = ~0, se.fit=TRUE) 
+predictions <- predict(Model_pNN50, newdata = data, re.form = ~0, se.fit=TRUE) 
 
 Plot_data <- data |>  data.frame(
   Mean = predictions$fit,
@@ -450,21 +639,21 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=pNN50)) +
 
 
 emm_tem <- emmeans(
-  Model_1,
+  Model_pNN50,
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
-  Model_1, 
+  Model_pNN50, 
   ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
-  Model_2,
+  Model_pNN50,
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
@@ -569,18 +758,22 @@ ggplot(Exp_2_HR,
 
 ggplot(Exp_2_HR, aes(x=(HR), color = Direction)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
 
-
-
-Linear_model_1 <- glmmTMB(log(HR) ~ Elevation + Direction,
+Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
                           data = Exp_2_HR)
-Linear_model_2 <- glmmTMB(log(HR) ~ Elevation * Direction,
-                          data = Exp_2_HR)
+
 
 qqnorm(resid(Linear_model_1))
 qqline(resid(Linear_model_1))
 
-qqnorm(resid(Linear_model_2))
-qqline(resid(Linear_model_2))
+res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
+
+testCategorical(res_linear_model, Exp_2_HR$Direction)
+testCategorical(res_linear_model, Exp_2_HR$Elevation)
+
+Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
+                          data = Exp_2_HR)
+Linear_model_2 <- glmmTMB(log(HR) ~ Elevation + Direction,
+                          data = Exp_2_HR)
 
 
 res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
@@ -596,19 +789,18 @@ plot(res_linear_model)
 AIC(Linear_model_1, Linear_model_2)
 anova(Linear_model_1, Linear_model_2)
 
-Model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
+Model_HR <- glmmTMB(log(HR) ~ Elevation * Direction,
                           data = Exp_2_HR)
-emm_elevation <- emmeans(Model_1, ~ Elevation | Direction, type = "response")
+
+emm_elevation <- emmeans(Model_HR, ~ Elevation | Direction, type = "response")
 contrast(emm_elevation, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_elevation, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
 
-emm_Direction <- emmeans(Model_1, ~ Direction | Elevation, type = "response")
+emm_Direction <- emmeans(Model_HR, ~ Direction | Elevation, type = "response")
 contrast(emm_Direction, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_Direction, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
-
-
 
 ##########Sensor_data_exp_1
 data_sensors_exp1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="Sensors")
