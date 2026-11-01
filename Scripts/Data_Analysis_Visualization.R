@@ -5,6 +5,7 @@ library(gridExtra)
 library(glmmTMB)
 library(emmeans)
 library(DHARMa)
+library(dplyr)
 ###############################
 #Exp_1
 ###############################
@@ -51,6 +52,7 @@ qqnorm(resid(Model_4))
 qqline(resid(Model_4))
 
 Model_res <- simulateResiduals(Model_3, n=2000)
+testResiduals(Model_res, data_exp_1$Site)
 plot(Model_res)
 
 Model_res <- simulateResiduals(Model_4 , n=2000)
@@ -195,6 +197,7 @@ qqnorm(resid(Model_2))
 qqline(resid(Model_2))
 
 Model_res <- simulateResiduals(Model_1 , n=2000)
+testCategorical(Model_res, data_exp_1$Direction)
 plot(Model_res)
 
 Model_res <- simulateResiduals(Model_2 , n=2000)
@@ -252,27 +255,29 @@ summary(Values_grad, infer = TRUE)
 
 ######
 #RMSSD
-Model_1 <- glmmTMB(log(RMSSD) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
-Model_2 <- glmmTMB(log(RMSSD) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, family = gaussian())
+Model_1 <- glmmTMB(log(RMSSD) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),
+              data = data_exp_1)
+Model_2 <- update(M0, dispformula = ~ Temperature)
+Model_3 <- update(M0, dispformula = ~ Temperature + Direction)
+Model_4 <- update(M0, dispformula = ~ Temperature * Direction)
 
-
-summary(Model_1)
-summary(Model_2)
 
 qqnorm(resid(Model_1))
 qqline(resid(Model_1))
+res_model <- simulateResiduals(Model_1, n = 2000)
+plotResiduals(res_model, data_exp_1$Direction)  
+testCategorical(res_model, data_exp_1$Temperature)
+testCategorical(res_model, data_exp_1$Site)
+testCategorical(res_model, data_exp_1$Direction)
+plotResiduals(res_model, data_exp_1$Body_mass_g)    
+plotResiduals(res_model, data_exp_1$Snail)           
+plot(res_model)
+AIC(Model_1, Model_2, Model_3, Model_4)
+anova(Model_1, Model_2, Model_3)
 
-qqnorm(resid(Model_2))
-qqline(resid(Model_2))
-
-Model_res <- simulateResiduals(Model_1 , n=2000)
-plot(Model_res)
-
-Model_res <- simulateResiduals(Model_2 , n=2000)
-plot(Model_res)
-
-AIC(Model_1, Model_2)
-anova(Model_1, Model_2)
+Model_1 <- glmmTMB(log(RMSSD) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),
+                   dispformula = ~ Temperature + Direction,
+                   data = data_exp_1)
 
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
@@ -564,13 +569,11 @@ ggplot(Exp_2_HR,
 
 ggplot(Exp_2_HR, aes(x=(HR), color = Direction)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
 
-Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction, dispformula = ~ Elevation + Direction,
-             data = Exp_2_HR)
 
-Linear_model_2 <- glmmTMB(log(HR) ~ Elevation  * Direction, dispformula = ~ Elevation * Direction,
+
+Linear_model_1 <- glmmTMB(log(HR) ~ Elevation + Direction,
                           data = Exp_2_HR)
-
-Linear_model_3<- glmmTMB(log(HR) ~ Elevation + Direction, dispformula = ~ Elevation * Direction,
+Linear_model_2 <- glmmTMB(log(HR) ~ Elevation * Direction,
                           data = Exp_2_HR)
 
 qqnorm(resid(Linear_model_1))
@@ -581,21 +584,26 @@ qqline(resid(Linear_model_2))
 
 
 res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
+testCategorical(res_linear_model, Exp_2_HR$Direction)
+testCategorical(res_linear_model, Exp_2_HR$Elevation)
 plot(res_linear_model)
 
 res_linear_model <- simulateResiduals(Linear_model_2, n=2000)
+testCategorical(res_linear_model, Exp_2_HR$Direction)
+testCategorical(res_linear_model, Exp_2_HR$Elevation)
 plot(res_linear_model)
 
-AIC(Linear_model_1, Linear_model_2, Linear_model_3)
-anova(Linear_model_1, Linear_model_2, Linear_model_3)
+AIC(Linear_model_1, Linear_model_2)
+anova(Linear_model_1, Linear_model_2)
 
-
-emm_elevation <- emmeans(Linear_model_1, ~ Elevation | Direction, type = "response")
+Model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
+                          data = Exp_2_HR)
+emm_elevation <- emmeans(Model_1, ~ Elevation | Direction, type = "response")
 contrast(emm_elevation, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_elevation, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
 
-emm_Direction <- emmeans(Linear_model_1, ~ Direction | Elevation, type = "response")
+emm_Direction <- emmeans(Model_1, ~ Direction | Elevation, type = "response")
 contrast(emm_Direction, "revpairwise", adjust = "bonferroni") |> confint()
 Values_grad <- contrast(emm_Direction, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad)
@@ -607,4 +615,3 @@ data_sensors_exp1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet
 summary_Data <- data_sensors_exp1 |> select(-contains("Time")) |> summarise(across(where(is.numeric),list(Mean = ~mean(.x, na.rm = TRUE), SD =~sd(.x,na.rm = TRUE)))) 
 summary_Data <- summary_Data |>  pivot_longer(cols =everything(),names_to = c("Variable", ".value"), names_pattern = "^(.*)_(Mean|SD)$") 
 View(summary_Data)
-write.csv(summary_Data, "C:/Users/jandr/Downloads/summary_Data.csv")
