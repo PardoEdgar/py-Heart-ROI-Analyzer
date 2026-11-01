@@ -12,20 +12,23 @@ Pixel intensity extraction, trimming of heart recordings, ROI selection tool, HR
 ---
 ## Contents
 
--`scripts/`: Python, R, and ImageJ Macro scripts for Pixel intennsity extraction, trimming of heart recordings, ROI selection tool, HRV metrics extraction, optocardiogram visualization, data analysis and data visualization.
+-`scripts/`: Python, R, and ImageJ Macro scripts for Pixel intensity extraction, trimming of heart recordings, ROI selection tool, HRV metrics extraction, optocardiogram visualization, data analysis and data visualization.
 
--`Data/`: Exp_1 and Exp_2 data presented in xlsx files. Each one contains Snail Size, HR or HRV metrics and sensors data (Temperature and pressure).
+-`Data/`: Exp_1 and Exp_2 data presented in xlsx files.
+Exp_1 contains Snail number identification, size (body mass and shell diameter), Heart rate, NN intervals or heart rate variability metrics, levels of treatment factors (Temperature, Site, Gradient direction), sensors data (ambient temperature and pressure and temperature treatments).
+Exp2 contains Snail body mass, Heart rate, NN intervals and sensors data (ambient temperature and pressure).
+
 ## Reproducibility
+
 -`Google Drive folder/`:  It contains the optocardiograms and the pixel-intensity data over time for all experiments and recordings. Link: https://drive.google.com/drive/folders/1Zj0yrm4FW6JRuhVCadqirOOXD2eTtY_x?usp=sharing
 
 All scripts conducted in Python. ImageJ and R are provided in sequential Order:
-1. `Automated_Trimming.py`
-2. `Manual_Trimming.py`
-3. `Macro_template.ijm`
-4. `Automated_heart_pixel_intensity_extraction.py`
-5. `Optocardiograms.py`
-6. `HRV_metrics_extraction.R`
-7. `Data_analysis_&_visualization.R`
+1. `Manual_Trimming.py`
+2. `Macro_template.ijm`
+3. `Automated_heart_pixel_intensity_extraction.py`
+4. `Optocardiograms.py`
+5. `HRV_metrics_extraction.R`
+6. `Data_analysis_&_visualization.R`
 
 ---
 ## Requirements
@@ -58,12 +61,17 @@ All scripts conducted in Python. ImageJ and R are provided in sequential Order:
 ## Author
 
 - Edgar Alejandro Pardo-Sarmiento
+  School of Sciences and Engineering, Universidad del Rosario, Colombia
 
 ### Colaborators
 - Eva Valentina Montesdeoca
+    School of Sciences and Engineering, Universidad del Rosario, Colombia
 - J.P. Hernandez
+    School of Sciences and Engineering, Universidad del Rosario, Colombia
 - Andre J. Riveros
+    School of Sciences and Engineering, Universidad del Rosario, Colombia
 - Natalia Buitrago-Ricaurte
+    School of Medicine and Health Sciences, Universidad del Rosario, Colombia
 
 ---
 
