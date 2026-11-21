@@ -187,7 +187,6 @@ ggplot(data_dir, aes(x = ratio, y = Site , color = Temperature))+
   theme(legend.position = "top")
 
 
-
 ####################
 #NNi
 
@@ -879,9 +878,29 @@ emm_elevation <- emmeans(Model_HR, ~ Elevation | Direction, type = "response")
 Values_ele <- contrast(emm_elevation, "pairwise", adjust = "bonferroni") 
 summary(Values_ele, infer = TRUE)
 
+data_2_elev <- as.data.frame(summary(Values_ele, infer = TRUE))
+
+ggplot(data_2_elev, aes(x = ratio, y =  contrast, color = Direction))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  geom_errorbar(aes(xmin = lower.CL, xmax = upper.CL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Elevation comparison", x = "Ratio (95% CI)") +
+  theme_classic() +
+  theme(legend.position = "top")
+
 emm_direction <- emmeans(Model_HR, ~ Direction | Elevation, type = "response")
 Values_dir<- contrast(emm_direction, "pairwise", adjust = "bonferroni") 
 summary(Values_dir, infer = TRUE)
+
+data_2_dir <- as.data.frame(summary(Values_dir, infer = TRUE)) |> mutate(Elevation = factor(Elevation, levels = c("310","910","1560", "2300","2560","3010")))
+
+ggplot(data_2_dir, aes(x = ratio, y =  contrast, color = Elevation))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  geom_errorbar(aes(xmin = lower.CL, xmax = upper.CL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Direction (Ascending / Descending)", x = "Ratio (95% CI)") +
+  theme_classic() +
+  theme(legend.position = "top")
 
 ##########Sensor_data_exp_1
 data_sensors_exp1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="Sensors")
