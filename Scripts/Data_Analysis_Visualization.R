@@ -6,6 +6,7 @@ library(glmmTMB)
 library(emmeans)
 library(DHARMa)
 library(dplyr)
+library(ggplot2)
 ###############################
 #Exp_1
 ###############################
@@ -34,9 +35,15 @@ for (y in 6:11)  {
 }
 
 grid.arrange(grobs= plots, ncol = 2, nrow= 3) 
-data_exp_1$Body_mass_g
+data_exp_1$shell
 
-full_model <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail) ,data=data_exp_1, family = gaussian())
+data_mass <- data_exp_1 |> dplyr::select(Snail, contains(c("Body", "shell"))) |>
+  distinct(Snail, .keep_all = TRUE)
+
+ggplot(data_mass, aes(x= Body_mass_g , y= Shell_diameter_mm  )) + geom_point(alpha= 0.5)+ geom_smooth(color="black") + theme_classic()
+
+
+full_model <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail),data=data_exp_1, family = gaussian())
 
 qqnorm(resid(full_model))
 qqline(resid(full_model))
@@ -65,6 +72,7 @@ testCategorical(Model_res, data_exp_1$Direction)
 
 AIC(full_model, var_1, var_2)
 anova(full_model, var_1, var_2)
+
 Model_1 <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction * Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~ Temperature * Direction, family = gaussian())
 Model_2 <- glmmTMB(log(MeanHR) ~  Temperature * Site  * Direction + Body_mass_g  + (1 | Snail ) ,data=data_exp_1, dispformula = ~ Temperature * Direction, family = gaussian())
 Model_3 <- glmmTMB(log(MeanHR) ~ (Temperature + Site + Direction)^2 + Body_mass_g + (1 | Snail),data = data_exp_1,dispformula = ~ Temperature * Direction, family = gaussian())
@@ -126,28 +134,59 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) +
   theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
   theme(legend.position = "top")
 
-
 emm_tem <- emmeans(
-  Model_HR,
-  ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
+  Model_HR, ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
+data_tem  <- as.data.frame(summary(Values_tem, infer = TRUE)) |> mutate(cond = paste(Site, Direction, sep = " - "))
+
+ggplot(data_tem, aes(x = ratio, y = cond, color = contrast))+
+    geom_vline(xintercept = 1, linetype = "dashed") +
+    geom_point(position = position_dodge(width = 0.4), size = 0.6) +
+    geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
+    labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+    theme_classic() +
+    theme(legend.position = "top")
+
 
 emm_site <- emmeans(
-  Model_HR, 
-  ~ Site | Direction * Temperature, type = "response")
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
+  Model_HR,  ~ Site | Direction * Temperature , type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
-emm_grad <- emmeans(
-  Model_HR,
-  ~ Direction | Site * Temperature, type = "response"
+data_site <- as.data.frame(summary(Values_site, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+color = c("darkblue","darkorange", "darkred")
+
+ggplot(data_site, aes(x = ratio, y = Direction , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Site (LaVega / Bogota)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+
+
+emm_direction <- emmeans(
+  Model_HR, 
+  ~ Direction | Site * Temperature , type = "response"
 )
-contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
-summary(Values_grad, infer = TRUE)
+Values_direction <- contrast(emm_direction, "revpairwise", adjust = "bonferroni") 
+summary(Values_direction, infer = TRUE)
+
+data_dir  <- as.data.frame(summary(Values_direction, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+
+ggplot(data_dir, aes(x = ratio, y = Site , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Direction (Descending / Ascending)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+
 
 ####################
 #NNi
@@ -255,24 +294,22 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=NNi)) +
 
 emm_tem <- emmeans(
   Model_NNi,
-  ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
+  ~ Temperature | Site * Direction , type = "response")
+Values_tem <- contrast(emm_tem, "pairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_NNi, 
-  ~ Site | Direction * Temperature, type = "response")
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
+  ~ Site | Direction * Temperature , type = "response")
+Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") |> confint()
+Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
   Model_NNi,
-  ~ Direction | Site * Temperature, type = "response"
+  ~ Direction  | Site * Temperature, type = "response"
 )
-contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
+Values_grad <- contrast(emm_grad, "pairwise", adjust = "bonferroni") 
 summary(Values_grad, infer = TRUE)
 
 ###############33
@@ -321,10 +358,11 @@ testCategorical(Model_res, data_exp_1$Direction)
 AIC(Model_1, Model_2, Model_3, Model_4)
 anova(Model_1, Model_2, Model_3, Model_4)
 
-Model <- glmmTMB(log(CV) ~  Temperature + Site + Direction + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
+Model_CV <- glmmTMB(log(CV) ~  Temperature + Site + Direction + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
-predictions <- predict(Model, newdata = data, re.form = ~0, se.fit=TRUE) 
+predictions <- predict(Model_CV, newdata = data, re.form = ~0, se.fit=TRUE) 
+
 
 Plot_data <- data |>  data.frame(
   Mean = predictions$fit,
@@ -349,21 +387,20 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) +
   theme(legend.position = "top")
 
 emm_tem <- emmeans(
-  Model,
+  Model_CV,
   ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
-  Model, 
+  Model_CV, 
   ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
-  Model,
+  Model_CV,
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
@@ -382,8 +419,9 @@ plot(Model_res)
 testCategorical(Model_res, data_exp_1$Temperature)
 testCategorical(Model_res, data_exp_1$Site)
 testCategorical(Model_res, data_exp_1$Direction)
+testOutliers(Model_res)
 
-var_1 <-update(full_model, dispformula = ~Temperature  + Direction)
+var_1 <-update(full_model, dispformula = ~ Temperature + Direction)
 
 Model_res <- simulateResiduals(var_1, n=2000)
 plot(Model_res)
@@ -432,13 +470,18 @@ plot(Model_res)
 testCategorical(Model_res, data_exp_1$Temperature)
 testCategorical(Model_res, data_exp_1$Site)
 testCategorical(Model_res, data_exp_1$Direction)
-plotResiduals(res_model, data_exp_1$Body_mass_g)    
-plotResiduals(res_model, data_exp_1$Snail) 
+plotResiduals(Model_res, data_exp_1$Body_mass_g)    
+plotResiduals(Model_res, data_exp_1$Snail) 
+
 
 AIC(Model_1, Model_2, Model_3, Model_4)
 anova(Model_1, Model_2, Model_3, Model_4)
 
 Model_RMSSD <- glmmTMB(log(RMSSD) ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~ Temperature + Direction, family = gaussian())
+
+Model_res <- simulateResiduals(Model_RMSSD, n=2000)
+testUniformity(Model_res)$statistic   
+plotResiduals(Model_res, data_exp_1$Snail)
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_RMSSD, newdata = data, re.form = ~0, se.fit=TRUE) 
@@ -469,14 +512,14 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=RMSSD)) +
 emm_tem <- emmeans(
   Model_RMSSD,
   ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
+Values_tem <- contrast(emm_tem, "pairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_RMSSD, 
   ~ Site | Direction * Temperature, type = "response")
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
+
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
@@ -535,7 +578,7 @@ testCategorical(Model_res, data_exp_1$Direction)
 AIC(Model_1, Model_2, Model_3, Model_4)
 anova(Model_1, Model_2, Model_3, Model_4)
 
-Model_SDNN <- glmmTMB(log(SDNN) ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
+Model_SDNN <- glmmTMB(log(SDNN) ~  Temperature + Site + Direction + Body_mass_g + (1 | Snail),data = data_exp_1, family = gaussian())
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
 predictions <- predict(Model_SDNN, newdata = data, re.form = ~0, se.fit=TRUE) 
@@ -566,15 +609,13 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) +
 emm_tem <- emmeans(
   Model_SDNN,
   ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_SDNN, 
   ~ Site | Direction * Temperature, type = "response")
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
+Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
@@ -582,7 +623,7 @@ emm_grad <- emmeans(
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
+Values_grad <- contrast(emm_grad, "pairwise", adjust = "bonferroni") 
 summary(Values_grad, infer = TRUE)
 
 
@@ -654,7 +695,7 @@ testCategorical(Model_res, data_exp_1$Direction)
 AIC(Model_1, Model_2, Model_3, Model_4)
 anova(Model_1, Model_2, Model_3, Model_4)
 
-Model_pNN50 <- glmmTMB(pNN50 ~  Temperature + Site + Direction+ Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~Temperature + Direction, family = gaussian())
+Model_pNN50 <- glmmTMB(pNN50 ~  Temperature + Site + Direction + Body_mass_g + (1 | Snail),data = data_exp_1, dispformula = ~Temperature + Direction, family = gaussian())
 
 
 data <-  expand.grid(Temperature = factor(levels(data_exp_1$Temperature), levels=levels(data_exp_1$Temperature)),Site = factor(levels(data_exp_1$Site), levels=levels(data_exp_1$Site)), Direction = factor(levels(data_exp_1$Direction), levels=levels(data_exp_1$Direction)),   Body_mass_g = mean(data_exp_1$Body_mass_g, na.rm = TRUE))
@@ -686,15 +727,13 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=pNN50)) +
 emm_tem <- emmeans(
   Model_pNN50,
   ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") |> confint()
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
 
 emm_site <- emmeans(
   Model_pNN50, 
   ~ Site | Direction * Temperature, type = "response")
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confint()
-Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
+Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
 emm_grad <- emmeans(
@@ -702,6 +741,7 @@ emm_grad <- emmeans(
   ~ Direction | Site * Temperature, type = "response"
 )
 contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
+emm_grad <- regrid(emm_grad, transform = "log")      # pasa las medias a escala log
 Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
 summary(Values_grad, infer = TRUE)
 
@@ -772,7 +812,7 @@ plot_2 <-ggplot(Exp_2_Sensor, aes(x= Time_s, y=`Temperature_°C` ))+
 
 plots <- c(plot_1,plot_2)
 grid.arrange( grobs = plots, ncols=1)
-
+Exp_2_HR |> group_by(Elevation, Direction) |> summary(n = n())
 Exp_2_HR$Elevation <-  factor(as.numeric(Exp_2_HR$Elevation))
 
 ggplot(Exp_2_HR,
@@ -803,23 +843,21 @@ ggplot(Exp_2_HR,
 
 ggplot(Exp_2_HR, aes(x=(HR), color = Direction)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
 
+
 Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
                           data = Exp_2_HR)
+
+Linear_model_2 <- glmmTMB(log(HR) ~ Elevation + Direction,
+                          data = Exp_2_HR)
+
 
 
 qqnorm(resid(Linear_model_1))
 qqline(resid(Linear_model_1))
 
-res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
 
-testCategorical(res_linear_model, Exp_2_HR$Direction)
-testCategorical(res_linear_model, Exp_2_HR$Elevation)
-
-Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
-                          data = Exp_2_HR)
-Linear_model_2 <- glmmTMB(log(HR) ~ Elevation + Direction,
-                          data = Exp_2_HR)
-
+qqnorm(resid(Linear_model_2))
+qqline(resid(Linear_model_2))
 
 res_linear_model <- simulateResiduals(Linear_model_1, n=2000)
 testCategorical(res_linear_model, Exp_2_HR$Direction)
@@ -838,14 +876,12 @@ Model_HR <- glmmTMB(log(HR) ~ Elevation * Direction,
                           data = Exp_2_HR)
 
 emm_elevation <- emmeans(Model_HR, ~ Elevation | Direction, type = "response")
-contrast(emm_elevation, "revpairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_elevation, "revpairwise", adjust = "bonferroni") 
-summary(Values_grad)
+Values_ele <- contrast(emm_elevation, "pairwise", adjust = "bonferroni") 
+summary(Values_ele, infer = TRUE)
 
-emm_Direction <- emmeans(Model_HR, ~ Direction | Elevation, type = "response")
-contrast(emm_Direction, "revpairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_Direction, "revpairwise", adjust = "bonferroni") 
-summary(Values_grad)
+emm_direction <- emmeans(Model_HR, ~ Direction | Elevation, type = "response")
+Values_dir<- contrast(emm_direction, "pairwise", adjust = "bonferroni") 
+summary(Values_dir, infer = TRUE)
 
 ##########Sensor_data_exp_1
 data_sensors_exp1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="Sensors")
