@@ -12,12 +12,11 @@ library(ggplot2)
 ###############################
 #MeanHR
 data_exp_1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="HRV_metrics")
-data_exp_1 <- data_exp_1 |>  dplyr::mutate(Temperature = factor(Temperature), Site = factor(Site),
+data_exp_1 <- data_exp_1 |>  dplyr::mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")), Site = factor(Site),
                                     Direction = factor(Direction),
                                     Snail = factor(Snail))
 x <- 1
 plots <- list()
-data_exp_1$Temperature <- factor(data_exp_1$Temperature, levels = c("3.5C","22C","40C"))
 colors <- c("darkblue", "orange", "red")
 for (y in 6:11)  {
   name <- paste0("plot","_",x)
@@ -123,11 +122,11 @@ Plot_data <- data |>  data.frame(
 
 shapes = c("solid","dashed")
 ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=MeanHR)) + 
-  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
-  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4, size= 0.5)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 0.5, size=0.1,stroke = NA)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
-  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
-  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5), size=0.75,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 0.9, inherit.aes = FALSE, linewidth =0.35) + 
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
@@ -165,7 +164,6 @@ ggplot(data_site, aes(x = ratio, y = Direction , color = Temperature))+
   labs(title = "Site (LaVega / Bogota)", x = "Ratio (95% CI)", y = NULL) +
   theme_classic() +
   theme(legend.position = "top")
-
 
 
 emm_direction <- emmeans(
@@ -279,23 +277,32 @@ Plot_data <- data |>  data.frame(
 
 shapes = c("solid","dashed")
 ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=NNi)) + 
-  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
-  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4, size= 0.5)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 0.5, size=0.1,stroke = NA)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
-  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
-  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5), size=0.75,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 0.9, inherit.aes = FALSE, linewidth =0.35) + 
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "NN Intervals (ms)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
   theme(legend.position = "top")
-
 
 emm_tem <- emmeans(
   Model_NNi,
   ~ Temperature | Site * Direction , type = "response")
-Values_tem <- contrast(emm_tem, "pairwise", adjust = "bonferroni") 
+Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
+data_tem  <- as.data.frame(summary(Values_tem, infer = TRUE)) |> mutate(cond = paste(Site, Direction, sep = " - "))
+
+ggplot(data_tem, aes(x = ratio, y = cond, color = contrast))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.6) +
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
+  labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
 
 emm_site <- emmeans(
   Model_NNi, 
@@ -304,12 +311,37 @@ Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") |> confint(
 Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
-emm_grad <- emmeans(
+data_site <- as.data.frame(summary(Values_site, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+color = c("darkblue","darkorange", "darkred")
+
+ggplot(data_site, aes(x = ratio, y = Direction , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Site (LaVega / Bogota)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+
+emm_direction <- emmeans(
   Model_NNi,
   ~ Direction  | Site * Temperature, type = "response"
 )
-Values_grad <- contrast(emm_grad, "pairwise", adjust = "bonferroni") 
-summary(Values_grad, infer = TRUE)
+Values_direction <- contrast(emm_direction, "pairwise", adjust = "bonferroni") 
+summary(Values_direction, infer = TRUE)
+
+data_dir  <- as.data.frame(summary(Values_direction, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+
+ggplot(data_dir, aes(x = ratio, y = Site , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Direction (Descending / Ascending)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
 
 ###############33
 ###CV
@@ -374,15 +406,15 @@ Plot_data <- data |>  data.frame(
 
 shapes = c("solid","dashed")
 ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) + 
-  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
-  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4, size= 0.5)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 0.5, size=0.1,stroke = NA)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
-  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
-  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5), size=0.75,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 0.9, inherit.aes = FALSE, linewidth =0.35) + 
   
   facet_grid(cols=vars(Direction))+
-  scale_linetype_manual(values = shapes) + 
-  theme_classic() + labs(x = "Temperature (°C)", y= "CV (%)")+
+  scale_linetype_manual(values = shapes) +
+  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
   theme(legend.position = "top")
 
 emm_tem <- emmeans(
@@ -390,6 +422,15 @@ emm_tem <- emmeans(
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
+data_tem  <- as.data.frame(summary(Values_tem, infer = TRUE)) |> mutate(cond = paste(Site, Direction, sep = " - "))
+
+ggplot(data_tem, aes(x = ratio, y = cond, color = contrast))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.6) +
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
+  labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 emm_site <- emmeans(
   Model_CV, 
@@ -398,13 +439,36 @@ Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confi
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
-emm_grad <- emmeans(
+data_site <- as.data.frame(summary(Values_site, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+color = c("darkblue","darkorange", "darkred")
+
+ggplot(data_site, aes(x = ratio, y = Direction , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Site (LaVega / Bogota)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+emm_direction <- emmeans(
   Model_CV,
   ~ Direction | Site * Temperature, type = "response"
 )
-contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
-summary(Values_grad, infer = TRUE)
+contrast(emm_direction, "pairwise", adjust = "bonferroni") |> confint()
+Values_direction <- contrast(emm_direction, "revpairwise", adjust = "bonferroni") 
+summary(Values_direction, infer = TRUE)
+
+data_dir  <- as.data.frame(summary(Values_direction, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+
+ggplot(data_dir, aes(x = ratio, y = Site , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Direction (Descending / Ascending)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 ######
 #RMSSD
@@ -496,15 +560,15 @@ Plot_data <- data |>  data.frame(
 
 shapes = c("solid","dashed")
 ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=RMSSD)) + 
-  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
-  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4, size= 0.5)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 0.5, size=0.1,stroke = NA)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
-  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
-  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5), size=0.75,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 0.9, inherit.aes = FALSE, linewidth =0.35) + 
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "RMSSD (ms)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
   theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
 
 
@@ -513,6 +577,15 @@ emm_tem <- emmeans(
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "pairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
+data_tem  <- as.data.frame(summary(Values_tem, infer = TRUE)) |> mutate(cond = paste(Site, Direction, sep = " - "))
+
+ggplot(data_tem, aes(x = ratio, y = cond, color = contrast))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.6) +
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
+  labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 emm_site <- emmeans(
   Model_RMSSD, 
@@ -521,6 +594,18 @@ Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") |> confi
 
 Values_site <- contrast(emm_site, "revpairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
+
+data_site <- as.data.frame(summary(Values_site, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+color = c("darkblue","darkorange", "darkred")
+
+ggplot(data_site, aes(x = ratio, y = Direction , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Site (LaVega / Bogota)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 emm_grad <- emmeans(
   Model_RMSSD,
@@ -593,16 +678,17 @@ Plot_data <- data |>  data.frame(
 
 shapes = c("solid","dashed")
 ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) + 
-  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
-  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4, size= 0.5)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 0.5, size=0.1,stroke = NA)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
-  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
-  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5), size=0.75,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 0.9, inherit.aes = FALSE, linewidth =0.35) + 
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "SDNN (ms)")+
-  theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
+  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
+  theme(legend.position = "top") +
+  coord_cartesian(ylim = c(0,400))
 
 
 emm_tem <- emmeans(
@@ -610,6 +696,15 @@ emm_tem <- emmeans(
   ~ Temperature | Site * Direction, type = "response")
 Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
+data_tem  <- as.data.frame(summary(Values_tem, infer = TRUE)) |> mutate(cond = paste(Site, Direction, sep = " - "))
+
+ggplot(data_tem, aes(x = ratio, y = cond, color = contrast))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.6) +
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
+  labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 emm_site <- emmeans(
   Model_SDNN, 
@@ -617,14 +712,36 @@ emm_site <- emmeans(
 Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
-emm_grad <- emmeans(
+data_site <- as.data.frame(summary(Values_site, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+color = c("darkblue","darkorange", "darkred")
+
+ggplot(data_site, aes(x = ratio, y = Direction , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.8) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Site (LaVega / Bogota)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
+
+emm_direction <- emmeans(
   Model_SDNN,
   ~ Direction | Site * Temperature, type = "response"
 )
-contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
-Values_grad <- contrast(emm_grad, "pairwise", adjust = "bonferroni") 
-summary(Values_grad, infer = TRUE)
+contrast(emm_direction, "pairwise", adjust = "bonferroni") |> confint()
+Values_direction <- contrast(emm_direction, "pairwise", adjust = "bonferroni") 
+summary(Values_direction, infer = TRUE)
 
+data_dir  <- as.data.frame(summary(Values_direction, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+
+ggplot(data_dir, aes(x = ratio, y = Site , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Direction (Descending / Ascending)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 
 #pNN50
@@ -711,23 +828,32 @@ Plot_data <- data |>  data.frame(
 
 shapes = c("solid","dashed")
 ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=pNN50)) + 
-  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4)+
-  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 4, size=0.3)+
+  geom_boxplot(aes(linetype = Site, group=interaction(Temperature,Site)), color = "black",position = position_dodge(width = 5), width = 4, size= 0.5)+
+  geom_point(aes(group=interaction(Temperature,Site)),color = "black",position= position_jitterdodge(jitter.width = 3, dodge.width = 5), alpha = 0.5, size=0.1,stroke = NA)+
   geom_smooth(aes(linetype = Site, group = Site),color = "black")+
-  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5))+ 
-  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 1, inherit.aes = FALSE) + 
+  geom_point(data =Plot_data, aes(x=Temperature_numeric_C, group= Site,y=Mean),color="red",position = position_dodge(width = 5), size=0.75,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Temperature_numeric_C,ymax= Max_CI, ymin =Min_CI, group=Site), position = position_dodge(width = 5),color="red", width = 0.9, inherit.aes = FALSE, linewidth =0.35) + 
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "pNN50 (%)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
   theme(legend.position = "top")
 
 
 emm_tem <- emmeans(
   Model_pNN50,
   ~ Temperature | Site * Direction, type = "response")
-Values_tem <- contrast(emm_tem, "revpairwise", adjust = "bonferroni") 
+Values_tem <- contrast(emm_tem, "pairwise", adjust = "bonferroni") 
 summary(Values_tem, infer = TRUE)
+data_tem  <- as.data.frame(summary(Values_tem, infer = TRUE)) |> mutate(cond = paste(Site, Direction, sep = " - "))
+
+ggplot(data_tem, aes(x = estimate, y = cond, color = contrast))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 0.6) +
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
+  labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 emm_site <- emmeans(
   Model_pNN50, 
@@ -735,14 +861,25 @@ emm_site <- emmeans(
 Values_site <- contrast(emm_site, "pairwise", adjust = "bonferroni") 
 summary(Values_site, infer = TRUE)
 
-emm_grad <- emmeans(
+emm_direction <- emmeans(
   Model_pNN50,
   ~ Direction | Site * Temperature, type = "response"
 )
-contrast(emm_grad, "pairwise", adjust = "bonferroni") |> confint()
-emm_grad <- regrid(emm_grad, transform = "log")      # pasa las medias a escala log
-Values_grad <- contrast(emm_grad, "revpairwise", adjust = "bonferroni") 
-summary(Values_grad, infer = TRUE)
+contrast(emm_direction, "pairwise", adjust = "bonferroni") |> confint()
+emm_direction <- regrid(emm_direction, transform = "log")      # pasa las medias a escala log
+Values_direction <- contrast(emm_direction, "revpairwise", adjust = "bonferroni") 
+summary(Values_direction, infer = TRUE)
+
+data_dir  <- as.data.frame(summary(Values_direction, infer = TRUE)) |> mutate(Temperature = factor(Temperature, levels = c("3.5C","22C","40C")))
+
+ggplot(data_dir, aes(x = ratio, y = Site , color = Temperature))+
+  geom_vline(xintercept = 1, linetype = "dashed") +
+  geom_point(position = position_dodge(width = 0.4), size = 1) +
+  scale_color_manual(values = color)+
+  geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.3)+
+  labs(title = "Direction (Descending / Ascending)", x = "Ratio (95% CI)", y = NULL) +
+  theme_classic() +
+  theme(legend.position = "top")
 
 ##Temperature vs mass
 Model_1_mass <- glmmTMB(MeanHR ~ Temperature + Body_mass_g + (1 | Snail), data = data_exp_1, family = gaussian())
