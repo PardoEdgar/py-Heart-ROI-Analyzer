@@ -285,7 +285,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=NNi)) +
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "NN intervals (ms)")+
   theme(legend.position = "top")
 
 emm_tem <- emmeans(
@@ -414,7 +414,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=CV)) +
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "CV (%)")+
   theme(legend.position = "top")
 
 emm_tem <- emmeans(
@@ -428,7 +428,7 @@ ggplot(data_tem, aes(x = ratio, y = cond, color = contrast))+
   geom_vline(xintercept = 1, linetype = "dashed") +
   geom_point(position = position_dodge(width = 0.4), size = 0.6) +
   geom_errorbar(aes(xmin = asymp.LCL, xmax = asymp.UCL), position = position_dodge(width = 0.4), width = 0.6)+
-  labs(title = "Temperature", x = "Ratio (95% CI)", y = NULL) +
+  labs(title = "Temperature", x = "Ratio (Estimated mean & 95% CI)", y = NULL) +
   theme_classic() +
   theme(legend.position = "top")
 
@@ -568,7 +568,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=RMSSD)) +
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "RMSSD (ms)")+
   theme(legend.position = "top") + coord_cartesian(ylim = c(0,400))
 
 
@@ -686,7 +686,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=SDNN)) +
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "SDNN (ms)")+
   theme(legend.position = "top") +
   coord_cartesian(ylim = c(0,400))
 
@@ -836,7 +836,7 @@ ggplot(data_exp_1, aes(x=Temperature_numeric_C,color="black", y=pNN50)) +
   
   facet_grid(cols=vars(Direction))+
   scale_linetype_manual(values = shapes) +
-  theme_classic() + labs(x = "Temperature (°C)", y= "Heart Rate (BPM)")+
+  theme_classic() + labs(x = "Temperature (°C)", y= "pNN50 (%)")+
   theme(legend.position = "top")
 
 
@@ -949,7 +949,6 @@ plot_2 <-ggplot(Exp_2_Sensor, aes(x= Time_s, y=`Temperature_°C` ))+
 plots <- c(plot_1,plot_2)
 grid.arrange( grobs = plots, ncols=1)
 Exp_2_HR |> group_by(Elevation, Direction) |> summary(n = n())
-Exp_2_HR$Elevation <-  factor(as.numeric(Exp_2_HR$Elevation))
 
 
 
@@ -1037,6 +1036,7 @@ ggplot(data_2_dir, aes(x = ratio, y =  contrast, color = Elevation))+
   theme(legend.position = "top")
 
 ##########Sensor_data_exp_1
+
 data_sensors_exp1 <- read_xlsx("C:/Users/jandr/Downloads/Data_Exp_1.xlsx", sheet="Sensors")
 summary_Data <- data_sensors_exp1 |> select(-contains("Time")) |> summarise(across(where(is.numeric),list(Mean = ~mean(.x, na.rm = TRUE), SD =~sd(.x,na.rm = TRUE)))) 
 summary_Data <- summary_Data |>  pivot_longer(cols =everything(),names_to = c("Variable", ".value"), names_pattern = "^(.*)_(Mean|SD)$") 
