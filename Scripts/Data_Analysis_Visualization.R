@@ -951,33 +951,6 @@ grid.arrange( grobs = plots, ncols=1)
 Exp_2_HR |> group_by(Elevation, Direction) |> summary(n = n())
 Exp_2_HR$Elevation <-  factor(as.numeric(Exp_2_HR$Elevation))
 
-ggplot(Exp_2_HR,
-       aes(x = Elevation,
-           y = HR)) +
-  geom_boxplot(
-    aes(group = interaction(Elevation, Direction),
-        linetype = Direction,  color = Direction),
-    position = position_dodge2(padding = 0.4),  size = 0.6, width = 0.3,
-    outlier.shape = NA
-  ) +
-  geom_point(
-    aes(group = interaction(Elevation, Direction)), position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1), size = 0.8, alpha = 0.8
-  ) + geom_smooth(
-    aes(group = Direction,
-        linetype = Direction, color = Direction),
-    se = TRUE,
-    #color = "black",
-    fill = "grey70",
-    size = 0.8,
-    fullrange = TRUE
-  ) +  xlab("Elevation (masl)") +
-  ylab("Heart Rate (BPM)")+
-  theme_classic() +
-  theme(legend.position = "top",
-    plot.title = element_text(hjust = 0.5, face = "bold")
-  )
-
-ggplot(Exp_2_HR, aes(x=(HR), color = Direction)) + geom_density()+ theme_classic()+ facet_grid(cols = vars(Elevation))
 
 
 Linear_model_1 <- glmmTMB(log(HR) ~ Elevation * Direction,
@@ -1010,6 +983,30 @@ anova(Linear_model_1, Linear_model_2)
 
 Model_HR <- glmmTMB(log(HR) ~ Elevation * Direction,
                           data = Exp_2_HR)
+
+
+data <-  expand.grid(Elevation = factor(levels(Exp_2_HR$Elevation), levels=levels(Exp_2_HR$Elevation)),Direction = factor(levels(Exp_2_HR$Direction), levels=levels(Exp_2_HR$Direction)))
+predictions <- predict(Model_HR, newdata = data, re.form = NULL, se.fit=TRUE) 
+
+Plot_data <- data |>  data.frame(
+  Mean = predictions$fit,
+  SE = predictions$se.fit) |> dplyr::mutate(
+    Max_CI = Mean + 1.96 * SE, 
+    Min_CI = Mean - 1.96 * SE) |> 
+  mutate(Mean = exp(Mean), Max_CI=exp(Max_CI), Min_CI=exp(Min_CI))
+
+Plot_data$Elevation <- as.numeric(Plot_data$Elevation)
+ggplot(Exp_2_HR,aes(x = Elevation, y = HR)) +
+  geom_boxplot(aes(group = interaction(Elevation, Direction),linetype = Direction),position = position_dodge2(padding = 0.4),  size = 0.6, width = 0.3,outlier.shape = NA) +
+  geom_point(aes(group = interaction(Elevation, Direction)), position = position_jitterdodge(dodge.width = 0.3, jitter.width = 0.1), size = 0.9, alpha = 0.8, stroke=NA) +
+  geom_smooth(aes(group = Direction,linetype = Direction),se = TRUE,color = "black",fill = "grey80",size = 0.8,fullrange = TRUE, alpha = 0.3) + 
+  geom_point(data =Plot_data, aes(x=Elevation, group= interaction(Elevation, Direction),y=Mean),color="red",position = position_dodge(width = 0.3), size=1,stroke = NA)+ 
+  geom_errorbar(data=Plot_data, aes(x = Elevation,ymax= Max_CI, ymin =Min_CI, group=interaction(Elevation, Direction)), position = position_dodge(width = 0.3),color="red", width = 0.1, inherit.aes = FALSE, linewidth =0.4) +
+  xlab("Elevation (masl)") +
+  ylab("Heart Rate (BPM)")+
+  theme_classic() +
+  theme(legend.position = "top", plot.title = element_text(hjust = 0.5, face = "bold"))
+  
 
 emm_elevation <- emmeans(Model_HR, ~ Elevation | Direction, type = "response")
 Values_ele <- contrast(emm_elevation, "pairwise", adjust = "bonferroni") 
